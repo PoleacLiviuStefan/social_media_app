@@ -42,7 +42,12 @@ const login = async (req, res) => {
                     return res.status(500).json({ error: "JWT generation failed" });
                 }
                 console.log(token)
-                res.cookie('token', token).json('Login successful');
+                res.cookie('token',token,{
+                    httpOnly:true,
+                    maxAge:3600000*5,
+                    secure:true,
+                    sameSite:'none',
+                 }).json('Login successful');
             });
         } else {
             res.status(401).json({ error: "Password not correct" });
