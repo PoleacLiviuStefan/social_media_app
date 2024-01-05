@@ -77,7 +77,12 @@ const profile = (req, res) => {
 }
 
 const logout = (req, res) => {
-    res.clearCookie('token').json('Logout successful');
+    res.clearCookie('token',{
+        httpOnly:true,
+        maxAge:3600000*5,
+        secure:true,
+        sameSite:'none',
+     }).json('Logout successful');
 }
 
 const upload = (req, res) => {
