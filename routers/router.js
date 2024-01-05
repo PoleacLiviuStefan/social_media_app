@@ -28,5 +28,7 @@ router.get("/getMediaAll",controller.getMediaAll);
 router.get("/albums/:albumCode",controller.getAlbumByCode);
 router.get("/test",controller.test);
 router.get("/search", controller.searchAlbums);
+router.get("/album/view/:albumCode", controller.incrementAlbumViews)
+
 
 module.exports = router;

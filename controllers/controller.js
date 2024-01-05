@@ -95,7 +95,8 @@ const upload = (req, res) => {
                 const album = {
                     title: albumTitle,
                     files: uploadedFiles,
-                    code: albumCode
+                    code: albumCode,
+                    views: 0 // Automatically handled by Mongoose default value
                 };
 
                 const currentAlbums = Array.isArray(user.albums) ? user.albums : [];
@@ -180,6 +181,41 @@ const searchAlbums = async (req, res) => {
 };
 
 
+const incrementAlbumViews = async (req, res) => {
+    const { albumCode } = req.params;
+    const viewThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    try {
+        const user = await User.findOne({ 'albums.code': albumCode }, { 'albums.$': 1 });
+        
+        if (!user) {
+            return res.status(404).json({ error: "Album not found" });
+        }
+
+        const album = user.albums[0];
+        const currentTime = new Date();
+        
+        if (!album.lastViewedAt || currentTime - new Date(album.lastViewedAt) > viewThreshold) {
+            // Update the views and last viewed timestamp
+            await User.findOneAndUpdate(
+                { 'albums.code': albumCode },
+                { 
+                    $inc: { 'albums.$.views': 1 },
+                    $set: { 'albums.$.lastViewedAt': currentTime }
+                },
+                { new: true }
+            );
+            res.json({ message: "View incremented" });
+        } else {
+            res.json({ message: "View increment threshold not reached" });
+        }
+    } catch (e) {
+        res.status(500).json({ error: "Failed to increment album views", details: e.message });
+    }
+};
+
+
+
 module.exports = {
     register,
     login,
@@ -190,5 +226,6 @@ module.exports = {
     getMediaAll,
     getAlbumByCode,
     searchAlbums,
+    incrementAlbumViews,
     test
 };
