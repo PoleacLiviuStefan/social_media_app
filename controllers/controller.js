@@ -41,6 +41,7 @@ const login = async (req, res) => {
                 if (err) {
                     return res.status(500).json({ error: "JWT generation failed" });
                 }
+                console.log(token)
                 res.cookie('token', token).json('Login successful');
             });
         } else {
