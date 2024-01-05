@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 app.use(
     cors({
       credentials: true,
-      origin: "http://localhost:5173",
+      origin: "https://site-blisio.netlify.app",
     })
   );
 app.listen(port,()=>{
