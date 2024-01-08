@@ -21,7 +21,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-
+app.enable('trust proxy')
 // Session configuration here (before passport.session())
 app.use(session({
     secret: 'Your Secret Key', // Replace with your own secret key
