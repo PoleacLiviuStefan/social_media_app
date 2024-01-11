@@ -31,12 +31,8 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, 'build')));
+
 app.use(express.static('public'));
-app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
-  
 app.use('/api', router);
 
 // MongoDB connection
