@@ -14,7 +14,7 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com";
+const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com/";
 
 const test = (req, res) => {
   res.send("Test endpoint working");
