@@ -1,50 +1,77 @@
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const TwitterStrategy = require('passport-twitter').Strategy;
 const User = require('../models/User'); // Adjust the path to your User model
-
-// Assuming you have a local strategy setup
-// passport.use(new LocalStrategy(
-//   function(username, password, done) {
-//     // Your local strategy logic...
-//   }
-// ));
 
 // Google OAuth Strategy
 passport.use(new GoogleStrategy(
     {
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: "/auth/google/callback"
+        callbackURL: "/api/google/callback"
     },
     async (_accessToken, _refreshToken, profile, done) => {
         try {
-            let user = await User.findOne({ googleId: profile.id });
+            // Check if user exists using email
+            let user = await User.findOne({ email: profile.emails[0].value });
 
             if (!user) {
+                // If user doesn't exist, create a new one
                 user = await User.create({
                     googleId: profile.id,
-                    username: profile.displayName,
+                    name: profile.displayName,
                     email: profile.emails[0].value,
-                    profilePic: profile.photos[0].value
+                    image: profile.photos[0].value
                 });
             }
 
+            // Existing or newly created user is returned
             return done(null, user);
         } catch (err) {
+            console.error('Error during GoogleStrategy authentication:', err);
             return done(err, null);
         }
     }
 ));
+passport.use(new TwitterStrategy({
+    consumerKey: process.env.TWITTER_CONSUMER_KEY,
+    consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
+    callbackURL: "/api/twitter/callback"
+  },
+  async (token, tokenSecret, profile, done) => {
+    try {
+      let user = await User.findOne({ twitterId: profile.id });
 
-passport.serializeUser(function(user, done) {
+      if (!user) {
+        // If user doesn't exist, create a new one
+        user = await User.create({
+          twitterId: profile.id,
+          name: profile.displayName,
+          // Twitter does not provide email by default
+          // Add any other relevant fields
+        });
+      }
+
+      return done(null, user);
+    } catch (err) {
+      console.error('Error during TwitterStrategy authentication:', err);
+      return done(err, null);
+    }
+  }
+));
+
+passport.serializeUser((user, done) => {
     done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user) {
-        done(err, user);
-    });
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        console.error('Error during user deserialization:', err);
+        done(err, null);
+    }
 });
 
 module.exports = passport;

@@ -7,11 +7,14 @@ const Album = require("../models/Album");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const passport = require("passport");
+const mongoose = require('mongoose'); // Add this line
 
 dotenv.config();
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
+
+const serverURL = "https://thler.com";
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -46,7 +49,7 @@ const login = async (req, res) => {
         jwtSecret,
         {},
         (err, token) => {
-          if (err) {
+          if (err) {  
             return res.status(500).json({ error: "JWT generation failed" });
           }
           console.log(token);
@@ -68,16 +71,74 @@ const login = async (req, res) => {
   }
 };
 
-const getGoogle = (req, res) => {
-  passport.authenticate("google", ["profile", "email"]);
+const getGoogle = (req, res, next) => {
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
 };
 
-const googleAuthenticate = (req, res) => {
-  passport.authenticate("google", {
-    successRedirect: clientURL,
-    failureRedirect: "/login/failed",
-  });
+
+const handleGoogleCallback = (req, res) => {
+  // Successful authentication
+  res.redirect(`${serverURL}/api/login/success`);
 };
+
+const getReddit = (req, res, next) => {
+  passport.authenticate('reddit', {
+    state: 'someRandomString', // Reddit requires a 'state' parameter for CSRF protection
+    duration: 'permanent', // or 'temporary' depending on your needs
+  })(req, res, next);
+};
+
+const handleRedditCallback = (req, res) => {
+  // Successful authentication
+  res.redirect(`${serverURL}/api/login/success`);
+};
+
+const getTwitter = (req, res, next) => {
+  passport.authenticate('twitter')(req, res, next);
+};
+
+
+const handleTwitterCallback = (req, res) => {
+  // Successful authentication
+  res.redirect(`${serverURL}/api/login/success`);
+};
+
+
+const loginSuccess = (req, res) => {
+  if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+  }
+
+  jwt.sign(
+      { email: req.user.email, id: req.user._id },
+      jwtSecret,
+      {},
+      (err, token) => {
+          if (err) {
+              return res.status(500).json({ error: "JWT generation failed" });
+          }
+
+          // Set the JWT as a cookie
+          res.cookie('token', token, {
+              httpOnly: false,
+              maxAge: 3600000 * 5,
+              secure: true,
+              sameSite: 'none'
+          });
+
+          // Redirect to the desired URL
+          res.redirect("https://thler.com/explore");
+      }
+  );
+};
+
+
+
+const loginFailed = (req,res)=>{
+  res.status(401).json({message:"Log In failure"});
+}
+
+
 
 const forgotPassword = (req, res) => {
   const { email } = req.body;
@@ -100,7 +161,7 @@ const forgotPassword = (req, res) => {
       from: "stefan.liviu286@gmail.com",
       to: "quequeg.liviu@gmail.com",
       subject: "Reset your password",
-      text: `http://localhost:5173/reset-password/${user._id}/${token}`,
+      text: `https://thler.com/reset-password/${user._id}/${token}`,
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -154,7 +215,7 @@ const sendEmailChange = (req, res) => {
       from: "stefan.liviu286@gmail.com",
       to: "quequeg.liviu@gmail.com",
       subject: "Reset your password",
-      text: `http://localhost:5173/reset-email/${user._id}/${token}`,
+      text: `http://thler.com/reset-email/${user._id}/${token}`,
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -173,6 +234,42 @@ const changeEmail = (req, res) => {
 
   User.findByIdAndUpdate({ _id: id }, { email: email });
 };
+
+const togglePrivacy = async (req, res) => {
+  const { token } = req.cookies; // Get the token from cookies
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    // Verify the token to get the user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Toggle the isPrivate field
+    user.isPrivate = !user.isPrivate;
+
+    // Save the updated user
+    await user.save();
+
+    res.json({ message: "Privacy setting updated", isPrivate: user.isPrivate });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res.status(500).json({ error: "Failed to update privacy setting", details: error.message });
+    }
+  }
+};
+
 
 const profile = (req, res) => {
   const { token } = req.cookies;
@@ -211,7 +308,7 @@ const getCurrentUserInfo = async (req, res) => {
     const decoded = jwt.verify(token, jwtSecret);
     const userId = decoded.id;
 
-    const user = await User.findById(userId).select("email bio name");
+    const user = await User.findById(userId).select("email bio name image");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -309,6 +406,80 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
+const removeProfileImage= async (req,res) => {
+  const { token } = req.cookies; // Assuming the token is stored in cookies
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    // Verify the token and extract user ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id;
+
+    // Update the user's image to null
+    const result = await User.updateOne(
+      { _id: currentUserId },
+      { $set: { image: null } }
+    );
+
+    if (result.nModified > 0) {
+      res.json({ message: "Profile image removed successfully" });
+    } else {
+      res.status(404).json({ error: "User not found or image already removed" });
+    }
+  } catch (e) {
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res.status(500).json({ error: "Failed to remove profile image", details: e.message });
+    }
+  }
+};
+
+const uploadProfileImage = async (req, res) => {
+  const { token } = req.cookies; // Assuming the token is stored in cookies
+
+  if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+      // Verify the token and extract user ID
+      const decoded = jwt.verify(token, jwtSecret);
+      const currentUserId = decoded.id;
+
+      // Check if a file is uploaded
+      if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Use the filename generated by Multer
+      const multerFilename = req.file.filename;
+
+      // Update the user's image with the Multer filename
+      const result = await User.updateOne(
+          { _id: currentUserId },
+          { $set: { image: multerFilename } }
+      );
+
+      if (result.modifiedCount > 0) {
+          res.json({ message: "Profile image updated successfully", filename: multerFilename });
+      } else {
+          res.status(404).json({ error: "User not found or image not updated" });
+      }
+  } catch (e) {
+      if (e instanceof jwt.JsonWebTokenError) {
+          res.status(401).json({ error: "Invalid token" });
+      } else {
+          res.status(500).json({ error: "Failed to upload profile image", details: e.message });
+      }
+  }
+};
+
+
+
 const logout = (req, res) => {
   res
     .clearCookie("token", {
@@ -369,46 +540,54 @@ const upload = (req, res) => {
 const getMedia = (req, res) => {
   const { token } = req.cookies;
   if (token) {
-    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-      if (err) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      try {
-        const user = await User.findById(userData.id).select("albums");
-        if (!user) {
-          return res.status(404).json({ error: "User not found" });
-        }
-        res.status(200).json({ albums: user.albums });
-      } catch (e) {
-        res
-          .status(500)
-          .json({ error: "Failed to retrieve albums", details: e.message });
-      }
-    });
+      jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+          if (err) {
+              return res.status(401).json({ error: "Unauthorized" });
+          }
+          try {
+              const user = await User.findById(userData.id).select("albums repostedAlbums");
+              if (!user) {
+                  return res.status(404).json({ error: "User not found" });
+              }
+              res.status(200).json({ 
+                  albums: user.albums, 
+                  repostedAlbums: user.repostedAlbums 
+              });
+          } catch (e) {
+              res
+                  .status(500)
+                  .json({ error: "Failed to retrieve albums", details: e.message });
+          }
+      });
   } else {
-    res.status(401).json({ error: "No token provided" });
+      res.status(401).json({ error: "No token provided" });
   }
 };
+
 
 const getMediaByUserName = async (req, res) => {
   const { username } = req.params; // Get the username from URL parameters
 
   try {
-    // Find the user by username and retrieve their albums
-    const user = await User.findOne({ name: username }).select("albums");
+      // Find the user by username and retrieve their albums and reposted albums
+      const user = await User.findOne({ name: username }).select("albums repostedAlbums");
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
 
-    // Sending the albums to the client
-    res.status(200).json({ albums: user.albums });
+      // Sending the albums and reposted albums to the client
+      res.status(200).json({ 
+          albums: user.albums, 
+          repostedAlbums: user.repostedAlbums 
+      });
   } catch (e) {
-    res
-      .status(500)
-      .json({ error: "Failed to retrieve albums", details: e.message });
+      res
+          .status(500)
+          .json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
+
 
 const getLikedAlbums = async (req, res) => {
   const { token } = req.cookies;
@@ -481,20 +660,21 @@ const getLikedAlbums = async (req, res) => {
 
 const getMediaAll = async (req, res) => {
   try {
-    const users = await User.find({}).select("albums name");
+    // Include 'image' in the selected fields
+    const users = await User.find({}).select("albums name image");
     const allAlbums = users.reduce((acc, user) => {
       const userAlbums = user.albums.map((album) => ({
         ...album._doc,
         userName: user.name,
+        userImage: user.image  // Use 'userImage' to avoid confusion with any 'image' field in the album
       }));
       acc.push(...userAlbums);
       return acc;
     }, []);
+    
     res.status(200).json({ albums: allAlbums });
   } catch (e) {
-    res
-      .status(500)
-      .json({ error: "Failed to retrieve albums", details: e.message });
+    res.status(500).json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
 
@@ -584,11 +764,11 @@ const getAlbumByCode = async (req, res) => {
     // Fetch the user document that contains the album with the given code
     const user = await User.findOne(
       { "albums.code": albumCode },
-      { "albums.$": 1, name: 1 }
+      { "albums.$": 1, name: 1, image: 1 }
     );
     if (user && user.albums.length > 0) {
       // Include the userName in the response along with the album data
-      res.json({ userName: user.name, ...user.albums[0] });
+      res.json({ userName: user.name, userImage: user.image , ...user.albums[0] });
     } else {
       res.status(404).json({ error: "Album not found" });
     }
@@ -759,6 +939,214 @@ const addLikeToAlbum = async (req, res) => {
   }
 };
 
+const saveAlbum = async (req, res) => {
+  const { albumCode } = req.params;
+  const { token } = req.cookies;
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let update;
+    if (user.savedAlbums.includes(albumCode)) {
+      // If the album is already saved, remove it
+      update = { $pull: { savedAlbums: albumCode } };
+    } else {
+      // If the album is not saved, add it
+      update = { $addToSet: { savedAlbums: albumCode } };
+    }
+
+    // Update the user's savedAlbums
+    const updatedUser = await User.findByIdAndUpdate(userId, update, { new: true });
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User update failed" });
+    }
+
+    res.json({ 
+      message: updatedUser.savedAlbums.includes(albumCode) ? "Album saved successfully" : "Album unsaved successfully" 
+    });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res.status(500).json({ error: "Failed to update album saved status", details: error.message });
+  }
+};
+
+const repostAlbum = async (req, res) => {
+  const { albumCode } = req.params;
+  const { token } = req.cookies;
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+    const currentUser = await User.findById(userId);
+
+    // Find the original album and its owner
+    const originalOwner = await User.findOne({ "albums.code": albumCode });
+    if (!originalOwner) {
+      return res.status(404).json({ error: "Original album not found" });
+    }
+
+    const originalAlbum = originalOwner.albums.find(album => album.code === albumCode);
+    if (!originalAlbum) {
+      return res.status(404).json({ error: "Original album not found" });
+    }
+
+    // Check if the current user already reposted the album
+    if (originalAlbum.repostsByUsers.includes(userId)) {
+      return res.status(400).json({ error: "You have already reposted this album" });
+    }
+
+    // Increment the repost count and add the current user to repostsByUsers
+    originalAlbum.reposts += 1;
+    originalAlbum.repostsByUsers.push(userId);
+    await originalOwner.save();
+
+    // Create a new album object for reposting
+    const repostedAlbum = {
+      ...originalAlbum.toObject(),
+      _id: new mongoose.Types.ObjectId(), // Generate a new ID
+      originalOwnerName: originalOwner.name // Add the original owner's name
+    };
+
+    // Add the reposted album to the current user's albums
+    currentUser.albums.push(repostedAlbum);
+    await currentUser.save();
+
+    res.json({ message: "Album reposted successfully" });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res.status(500).json({ error: "Failed to repost album", details: error.message });
+  }
+};
+
+
+const checkIfAlbumRepostedByUser = async (req, res) => {
+  const { albumCode } = req.params; // Get the album code from the request parameters
+  const { token } = req.cookies; // Get the token from cookies
+
+  if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+      // Decode the token to get the user's ID
+      const decoded = jwt.verify(token, jwtSecret);
+      const userId = decoded.id;
+
+      // Find the album by its code
+      const album = await User.findOne({ "albums.code": albumCode }, { "albums.$": 1 });
+
+      if (!album || album.albums.length === 0) {
+          return res.status(404).json({ error: "Album not found" });
+      }
+
+      // Check if the user's ID is in the repostsByUsers array
+      const isReposted = album.albums[0].repostsByUsers.includes(userId);
+
+      res.json({ isReposted });
+  } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+          return res.status(401).json({ error: "Invalid token" });
+      }
+      res.status(500).json({ error: "Failed to check repost status", details: error.message });
+  }
+};
+
+
+
+
+const getSavedAlbums = async (req, res) => {
+  const { token } = req.cookies; // Assuming the user's token is stored in cookies
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    // Decode the token to get the user ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+
+    // Find the user and get their savedAlbums
+    const user = await User.findById(userId).select('savedAlbums name image');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Retrieve albums based on the savedAlbums codes
+    const usersWithSavedAlbums = await User.find(
+      { "albums.code": { $in: user.savedAlbums } },
+      { "albums.$": 1 }
+    ).lean();
+
+    // Prepare the array of saved albums to return
+    const albums = usersWithSavedAlbums.reduce((acc, u) => {
+      const userAlbums = u.albums.map((album) => ({
+        ...album,
+        userName: user.name, // Add the userName for each album
+        userImage: user.image // Add the userImage for each album
+      }));
+      acc.push(...userAlbums);
+      return acc;
+    }, []);
+
+    res.json({ userName: user.name, userImage: user.image, savedAlbums: albums });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res.status(500).json({ error: "Failed to retrieve saved albums", details: error.message });
+  }
+};
+
+const isAlbumSaved = async (req, res) => {
+  const { albumCode } = req.params;
+  const { token } = req.cookies;
+
+  if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+      const decoded = jwt.verify(token, jwtSecret);
+      const userId = decoded.id;
+
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
+
+      const isSaved = user.savedAlbums.includes(albumCode);
+
+      res.json({ isSaved });
+  } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+          return res.status(401).json({ error: "Invalid token" });
+      }
+      res.status(500).json({ error: "Failed to check if album is saved", details: error.message });
+  }
+};
+
+
 const findUserByToken = async (req, res) => {
   const { idsArray } = req.body;
   const { token } = req.cookies;
@@ -871,7 +1259,6 @@ const addNotification = async (userId, type, message, albumCode, albumTitle, com
 
 const getAlbumComments = async (req, res) => {
   const { albumCode } = req.params;
-  console.log(albumCode);
 
   try {
     // Find the user who owns the album with the specified code
@@ -888,6 +1275,12 @@ const getAlbumComments = async (req, res) => {
       return res.status(404).json({ error: "Album not found" });
     }
 
+    // Check if comments are hidden for this album
+    console.log("album:" , album);
+    if (album.hideComments) {
+      return res.status(403).json({ error: "Comments are hidden for this album" });
+    }
+
     // Fetch usernames for each comment
     const commentsWithUsernames = await Promise.all(
       album.comments.map(async (comment) => {
@@ -902,11 +1295,89 @@ const getAlbumComments = async (req, res) => {
     // Return the comments of the album with usernames
     res.json(commentsWithUsernames);
   } catch (e) {
-    res
-      .status(500)
-      .json({ error: "Failed to retrieve comments", details: e.message });
+    res.status(500).json({ error: "Failed to retrieve comments", details: e.message });
   }
 };
+
+
+const hideAllComments = async (req, res) =>  {
+  const { token } = req.cookies; // Assuming the current user's ID is in a token
+
+  try {
+    // Verify the token and get the current user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id;
+
+    // Retrieve the current user
+    const user = await User.findById(currentUserId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Toggle hideComments field for each album
+    user.albums.forEach(album => {
+      album.hideComments = !album.hideComments;
+    });
+
+    // Save the updated user
+    await user.save();
+
+    res.json({ message: "Comment visibility toggled successfully" });
+
+  } catch (e) {
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      // Log the error for debugging purposes
+      console.error(e);
+      res.status(500).json({
+        error: "Failed to toggle comment visibility",
+        details: e.message,
+      });
+    }
+  }
+};
+
+const editProfileOptions = async (req, res) => {
+  const { token } = req.cookies; // Assuming the current user's ID is in a token
+
+  try {
+    // Verify the token and get the current user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id;
+
+    // Retrieve the current user
+    const user = await User.findById(currentUserId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if any album has hideComments set to true
+    const anyHidden = user.albums.some(album => album.hideComments);
+
+    // Also check if the user's account is private
+    const isPrivate = user.isPrivate;
+
+    res.json({ 
+      hidden: anyHidden,
+      isPrivate: isPrivate
+    });
+
+  } catch (e) {
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      // Log the error for debugging purposes
+      console.error(e);
+      res.status(500).json({
+        error: "Failed to check albums and privacy status",
+        details: e.message,
+      });
+    }
+  }
+};
+
+
 
 const followUser = async (req, res) => {
   const { usernameToFollow } = req.body;
@@ -1073,11 +1544,22 @@ const getUserStats = async (req, res) => {
 module.exports = {
   register,
   login,
+  getGoogle,
+  handleGoogleCallback,
+  getReddit,
+  handleRedditCallback,
+  getTwitter,
+  handleTwitterCallback,
+  loginSuccess,
+  loginFailed,
   forgotPassword,
   resetPassword,
   sendEmailChange,
   changeEmail,
+  togglePrivacy,
   profile,
+  removeProfileImage,
+  uploadProfileImage,
   getCurrentUserInfo,
   updateUserProfile,
   logout,
@@ -1093,9 +1575,16 @@ module.exports = {
   searchAlbums,
   incrementAlbumViews,
   addLikeToAlbum,
+  saveAlbum,
+  repostAlbum,
+  checkIfAlbumRepostedByUser,
+  getSavedAlbums,
+  isAlbumSaved,
   findUserByToken,
   addCommentToAlbum,
   getAlbumComments,
+  hideAllComments,
+  editProfileOptions,
   followUser,
   checkIfFollowingAlbumOwner,
   getFollowingInfo,

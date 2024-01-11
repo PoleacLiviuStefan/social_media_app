@@ -20,10 +20,16 @@ const UserSchema = new Schema({
     bio: {type: String, default: ""},
     password: String,
     image: { type: String, default: null },
+    isPrivate: {type: Boolean, default: false},
+    googleId: { type: String, unique: true, sparse: true }, // Unique Google ID for Google OAuth
+    redditId: { type: String, unique: true, sparse: true }, // Unique Reddit ID for Reddit OAuth
+    twitterId: { type: String, unique: true, sparse: true }, // Unique Twitter ID for Reddit OAuth
     albums: [AlbumSchema],
+    repostedAlbums: [AlbumSchema],
     followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likedAlbums: [{ type: String }],
+    savedAlbums: [{type: String}],
     notifications: [NotificationSchema]
 });
 

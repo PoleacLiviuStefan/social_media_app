@@ -14,7 +14,7 @@ dotenv.config();
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "https://site-blisio.netlify.app", // Update as per your client URL
+    origin: "https://thler.com", // Update as per your client URL
     exposedHeaders: ["Set-Cookie"]
 };
 
