@@ -14,7 +14,7 @@ dotenv.config();
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "http://localhost:5173", // Update as per your client URL
+    origin: "https://thler.com", // Update as per your client URL
     exposedHeaders: ["Set-Cookie"]
 };
 
