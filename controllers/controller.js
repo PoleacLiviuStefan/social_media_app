@@ -660,23 +660,26 @@ const getLikedAlbums = async (req, res) => {
 
 const getMediaAll = async (req, res) => {
   try {
-    // Include 'image' in the selected fields, but exclude 'repostedAlbums'
-    const users = await User.find({}).select("albums name image -repostedAlbums");
+    // Fetch all users with selected fields
+    const users = await User.find({}, "name image albums").exec();
+
+    // Process the data to exclude repostedAlbums
     const allAlbums = users.reduce((acc, user) => {
       const userAlbums = user.albums.map((album) => ({
         ...album._doc,
         userName: user.name,
-        userImage: user.image  // Use 'userImage' to avoid confusion with any 'image' field in the album
+        userImage: user.image,
       }));
       acc.push(...userAlbums);
       return acc;
     }, []);
-    
+
     res.status(200).json({ albums: allAlbums });
   } catch (e) {
     res.status(500).json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
+
 
 
 const getNotifications = async (req, res) => {
