@@ -660,8 +660,8 @@ const getLikedAlbums = async (req, res) => {
 
 const getMediaAll = async (req, res) => {
   try {
-    // Include 'image' in the selected fields
-    const users = await User.find({}).select("albums name image");
+    // Include 'image' in the selected fields, but exclude 'repostedAlbums'
+    const users = await User.find({}).select("albums name image -repostedAlbums");
     const allAlbums = users.reduce((acc, user) => {
       const userAlbums = user.albums.map((album) => ({
         ...album._doc,
@@ -677,6 +677,7 @@ const getMediaAll = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
+
 
 const getNotifications = async (req, res) => {
   const { token } = req.cookies;
