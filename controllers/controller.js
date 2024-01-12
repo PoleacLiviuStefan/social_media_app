@@ -94,7 +94,7 @@ const handleRedditCallback = (req, res) => {
 };
 
 const getTwitter = (req, res, next) => {
-  passport.authenticate('twitter')(req, res, next);
+  passport.authenticate('twitter', { failureRedirect: '/login' })(req, res, next);
 };
 
 

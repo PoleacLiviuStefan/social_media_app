@@ -34,7 +34,7 @@ app.use(passport.session());
 
 app.use(express.static('public'));
 app.use('/api', router);
-
+passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 
