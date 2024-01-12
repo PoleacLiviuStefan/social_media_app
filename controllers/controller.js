@@ -127,7 +127,7 @@ const loginSuccess = (req, res) => {
           });
 
           // Redirect to the desired URL
-          res.redirect("https://thler.com/explore");
+          res.redirect("https://thler.com");
       }
   );
 };
