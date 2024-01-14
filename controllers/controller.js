@@ -518,7 +518,7 @@ const upload = (req, res) => {
 
   const albumTitle = req.body.albumTitle;
   const { token } = req.cookies;
-
+  console.log(uploadedFiles);
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
