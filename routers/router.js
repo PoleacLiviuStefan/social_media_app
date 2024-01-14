@@ -50,6 +50,7 @@ router.get("/getMedia", controller.getMedia);
 router.get("/getMediaFromFollowing", controller.getMediaFromFollowing);
 router.get("/userAlbums/:username", controller.getMediaByUserName);
 router.get("/getLikedAlbums",controller.getLikedAlbums)
+router.get("/:albumCode/:mediaCode/isLiked",controller.checkIfLiked)
 router.get("/hideAllComents", controller.hideAllComments);
 router.get("/checkOptions", controller.editProfileOptions);
 router.get("/getMediaAll", controller.getMediaAll);
@@ -73,8 +74,10 @@ router.get(
   controller.checkIfFollowingAlbumOwner
 );
 router.post("/album/whoLiked", controller.findUserByToken);
+router.get("/getTopUsers",controller.getTopUsersByViews)
 router.post("/user/:userId/following", controller.getFollowingInfo);
 router.post("/user/:username", controller.getUserStats);
 router.get("/getMoreAlbums/:currentAlbumCode", controller.getMoreAlbums);
-
+router.get('/:albumCode/:mediaCode', controller.getMediaItem);
+router.post("/:albumCode/likeMedia/:mediaCode" ,controller.likeMediaItem);
 module.exports = router;

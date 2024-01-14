@@ -3,17 +3,27 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+
+
 const CommentSchema = new Schema({
     user: String, // Consider using user reference if you have user IDs
     text: String, // The actual comment text
     commentDate: { type: Date, default: Date.now } // Auto-set the date of the comment
+}); 
+
+const MediaScheme = new Schema({
+    name: String,
+    code: String,
+    likes: Number,
+    likesByUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 });
 
 const AlbumSchema = new Schema({
-    title: String,        
-    files: [String],      
+    title: String,            
     code: String,
     originalOwnerName: { type: String, default: null }, // Username of the original owner    
+    originalOwnerImage: { type: String, default: null },
+    content: [MediaScheme],
     views: { type: Number, default: 0 },
     lastViewedAt: { type: Date },
     likes: { type: Number, default: 0 },

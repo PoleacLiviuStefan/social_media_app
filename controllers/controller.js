@@ -7,14 +7,14 @@ const Album = require("../models/Album");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const passport = require("passport");
-const mongoose = require('mongoose'); // Add this line
+const mongoose = require("mongoose"); // Add this line
 
 dotenv.config();
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com";
+const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com"; //http://localhost:3000
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -49,7 +49,7 @@ const login = async (req, res) => {
         jwtSecret,
         {},
         (err, token) => {
-          if (err) {  
+          if (err) {
             return res.status(500).json({ error: "JWT generation failed" });
           }
           console.log(token);
@@ -72,9 +72,12 @@ const login = async (req, res) => {
 };
 
 const getGoogle = (req, res, next) => {
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
 };
-
 
 const handleGoogleCallback = (req, res) => {
   // Successful authentication
@@ -82,9 +85,9 @@ const handleGoogleCallback = (req, res) => {
 };
 
 const getReddit = (req, res, next) => {
-  passport.authenticate('reddit', {
-    state: 'someRandomString', // Reddit requires a 'state' parameter for CSRF protection
-    duration: 'permanent', // or 'temporary' depending on your needs
+  passport.authenticate("reddit", {
+    state: "someRandomString", // Reddit requires a 'state' parameter for CSRF protection
+    duration: "permanent", // or 'temporary' depending on your needs
   })(req, res, next);
 };
 
@@ -94,51 +97,49 @@ const handleRedditCallback = (req, res) => {
 };
 
 const getTwitter = (req, res, next) => {
-  passport.authenticate('twitter', { failureRedirect: '/login' })(req, res, next);
+  passport.authenticate("twitter", { failureRedirect: "/login" })(
+    req,
+    res,
+    next
+  );
 };
-
 
 const handleTwitterCallback = (req, res) => {
   // Successful authentication
   res.redirect(`${serverURL}/api/login/success`);
 };
 
-
 const loginSuccess = (req, res) => {
   if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
+    return res.status(401).json({ error: "User not authenticated" });
   }
 
   jwt.sign(
-      { email: req.user.email, id: req.user._id },
-      jwtSecret,
-      {},
-      (err, token) => {
-          if (err) {
-              return res.status(500).json({ error: "JWT generation failed" });
-          }
-
-          // Set the JWT as a cookie
-          res.cookie('token', token, {
-              httpOnly: false,
-              maxAge: 3600000 * 5,
-              secure: true,
-              sameSite: 'none'
-          });
-
-          // Redirect to the desired URL
-          res.redirect("https://thler.com");
+    { email: req.user.email, id: req.user._id },
+    jwtSecret,
+    {},
+    (err, token) => {
+      if (err) {
+        return res.status(500).json({ error: "JWT generation failed" });
       }
+
+      // Set the JWT as a cookie
+      res.cookie("token", token, {
+        httpOnly: false,
+        maxAge: 3600000 * 5,
+        secure: true,
+        sameSite: "none",
+      });
+
+      // Redirect to the desired URL
+      res.redirect("https://thler.com");
+    }
   );
 };
 
-
-
-const loginFailed = (req,res)=>{
-  res.status(401).json({message:"Log In failure"});
-}
-
-
+const loginFailed = (req, res) => {
+  res.status(401).json({ message: "Log In failure" });
+};
 
 const forgotPassword = (req, res) => {
   const { email } = req.body;
@@ -196,7 +197,7 @@ const resetPassword = (req, res) => {
 
 const sendEmailChange = (req, res) => {
   const { email } = req.body;
-    console.log(email);
+  console.log(email);
   User.findOne({ email: email }).then((user) => {
     if (!user) {
       return res.send({ Status: "User not existed" });
@@ -215,7 +216,7 @@ const sendEmailChange = (req, res) => {
       from: "stefan.liviu286@gmail.com",
       to: "quequeg.liviu@gmail.com",
       subject: "Reset your password",
-      text: `http://thler.com/reset-email/${user._id}/${token}`,
+      text: `https://thler.com/reset-email/${user._id}/${token}`,
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -265,11 +266,15 @@ const togglePrivacy = async (req, res) => {
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
     } else {
-      res.status(500).json({ error: "Failed to update privacy setting", details: error.message });
+      res
+        .status(500)
+        .json({
+          error: "Failed to update privacy setting",
+          details: error.message,
+        });
     }
   }
 };
-
 
 const profile = (req, res) => {
   const { token } = req.cookies;
@@ -313,7 +318,12 @@ const getCurrentUserInfo = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ email: user.email, bio: user.bio, name: user.name, image: user.image });
+    res.json({
+      email: user.email,
+      bio: user.bio,
+      name: user.name,
+      image: user.image,
+    });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid token" });
@@ -406,7 +416,7 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
-const removeProfileImage= async (req,res) => {
+const removeProfileImage = async (req, res) => {
   const { token } = req.cookies; // Assuming the token is stored in cookies
 
   if (!token) {
@@ -427,13 +437,17 @@ const removeProfileImage= async (req,res) => {
     if (result.nModified > 0) {
       res.json({ message: "Profile image removed successfully" });
     } else {
-      res.status(404).json({ error: "User not found or image already removed" });
+      res
+        .status(404)
+        .json({ error: "User not found or image already removed" });
     }
   } catch (e) {
     if (e instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
     } else {
-      res.status(500).json({ error: "Failed to remove profile image", details: e.message });
+      res
+        .status(500)
+        .json({ error: "Failed to remove profile image", details: e.message });
     }
   }
 };
@@ -442,43 +456,46 @@ const uploadProfileImage = async (req, res) => {
   const { token } = req.cookies; // Assuming the token is stored in cookies
 
   if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+    return res.status(401).json({ error: "No token provided" });
   }
 
   try {
-      // Verify the token and extract user ID
-      const decoded = jwt.verify(token, jwtSecret);
-      const currentUserId = decoded.id;
+    // Verify the token and extract user ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id;
 
-      // Check if a file is uploaded
-      if (!req.file) {
-          return res.status(400).json({ error: "No file uploaded" });
-      }
+    // Check if a file is uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-      // Use the filename generated by Multer
-      const multerFilename = req.file.filename;
+    // Use the filename generated by Multer
+    const multerFilename = req.file.filename;
 
-      // Update the user's image with the Multer filename
-      const result = await User.updateOne(
-          { _id: currentUserId },
-          { $set: { image: multerFilename } }
-      );
+    // Update the user's image with the Multer filename
+    const result = await User.updateOne(
+      { _id: currentUserId },
+      { $set: { image: multerFilename } }
+    );
 
-      if (result.modifiedCount > 0) {
-          res.json({ message: "Profile image updated successfully", filename: multerFilename });
-      } else {
-          res.status(404).json({ error: "User not found or image not updated" });
-      }
+    if (result.modifiedCount > 0) {
+      res.json({
+        message: "Profile image updated successfully",
+        filename: multerFilename,
+      });
+    } else {
+      res.status(404).json({ error: "User not found or image not updated" });
+    }
   } catch (e) {
-      if (e instanceof jwt.JsonWebTokenError) {
-          res.status(401).json({ error: "Invalid token" });
-      } else {
-          res.status(500).json({ error: "Failed to upload profile image", details: e.message });
-      }
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res
+        .status(500)
+        .json({ error: "Failed to upload profile image", details: e.message });
+    }
   }
 };
-
-
 
 const logout = (req, res) => {
   res
@@ -492,11 +509,16 @@ const logout = (req, res) => {
 };
 
 const upload = (req, res) => {
-  const uploadedFiles = req.files.map((file) => file.filename);
+  const uploadedFiles = req.files.map((file) => ({
+    name: file.filename,
+    code: uuidv4(),
+    likes: 0,
+    likesByUsers: [],
+  }));
 
   const albumTitle = req.body.albumTitle;
-
   const { token } = req.cookies;
+
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
@@ -511,25 +533,21 @@ const upload = (req, res) => {
         const albumCode = uuidv4();
         const album = {
           title: albumTitle,
-          files: uploadedFiles,
+          files: req.files.map((file) => file.filename),
           code: albumCode,
-          views: 0, // Automatically handled by Mongoose default value
+          content: uploadedFiles,
         };
 
-        const currentAlbums = Array.isArray(user.albums) ? user.albums : [];
-        const updatedAlbums = [...currentAlbums, album];
-
-        await User.findByIdAndUpdate(userData.id, {
-          $set: { albums: updatedAlbums },
-        });
+        user.albums.push(album);
+        await user.save();
 
         res
           .status(200)
-          .json({ message: "Album updated successfully", albumCode });
+          .json({ message: "Album created successfully", albumCode });
       } catch (e) {
         res
           .status(500)
-          .json({ error: "Profile update failed", details: e.message });
+          .json({ error: "Failed to create album", details: e.message });
       }
     });
   } else {
@@ -538,56 +556,59 @@ const upload = (req, res) => {
 };
 
 const getMedia = (req, res) => {
+  console.log("da");
   const { token } = req.cookies;
   if (token) {
-      jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-          if (err) {
-              return res.status(401).json({ error: "Unauthorized" });
-          }
-          try {
-              const user = await User.findById(userData.id).select("albums repostedAlbums");
-              if (!user) {
-                  return res.status(404).json({ error: "User not found" });
-              }
-              res.status(200).json({ 
-                  albums: user.albums, 
-                  repostedAlbums: user.repostedAlbums 
-              });
-          } catch (e) {
-              res
-                  .status(500)
-                  .json({ error: "Failed to retrieve albums", details: e.message });
-          }
-      });
+    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+      if (err) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      try {
+        const user = await User.findById(userData.id).select(
+          "albums repostedAlbums"
+        );
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        res.status(200).json({
+          albums: user.albums,
+          repostedAlbums: user.repostedAlbums,
+        });
+      } catch (e) {
+        res
+          .status(500)
+          .json({ error: "Failed to retrieve albums", details: e.message });
+      }
+    });
   } else {
-      res.status(401).json({ error: "No token provided" });
+    res.status(401).json({ error: "No token provided" });
   }
 };
-
 
 const getMediaByUserName = async (req, res) => {
   const { username } = req.params; // Get the username from URL parameters
 
   try {
-      // Find the user by username and retrieve their albums and reposted albums
-      const user = await User.findOne({ name: username }).select("albums repostedAlbums");
+    // Find the user by username and retrieve their albums and reposted albums
+    const user = await User.findOne({ name: username }).select(
+      "albums repostedAlbums"
+    );
 
-      if (!user) {
-          return res.status(404).json({ error: "User not found" });
-      }
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-      // Sending the albums and reposted albums to the client
-      res.status(200).json({ 
-          albums: user.albums, 
-          repostedAlbums: user.repostedAlbums 
-      });
+    // Sending the albums and reposted albums to the client
+    res.status(200).json({
+      albums: user.albums,
+      repostedAlbums: user.repostedAlbums,
+    });
   } catch (e) {
-      res
-          .status(500)
-          .json({ error: "Failed to retrieve albums", details: e.message });
+    res
+      .status(500)
+      .json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
-
 
 const getLikedAlbums = async (req, res) => {
   const { token } = req.cookies;
@@ -601,39 +622,29 @@ const getLikedAlbums = async (req, res) => {
     const userId = decoded.id;
 
     const currentUser = await User.findById(userId);
-    if (
-      !currentUser ||
-      !currentUser.likedAlbums ||
-      currentUser.likedAlbums.length === 0
-    ) {
+    if (!currentUser || !currentUser.likedAlbums || currentUser.likedAlbums.length === 0) {
       return res.status(404).json({ error: "User has no liked albums" });
     }
 
-    console.log("Liked Albums Codes:", currentUser.likedAlbums);
-
     // Search all users' albums to find matches
     const usersWithLikedAlbums = await User.find(
-      {
-        "albums.code": { $in: currentUser.likedAlbums },
-      },
-      "name albums"
+      { "albums.code": { $in: currentUser.likedAlbums } },
+      "name image albums" // Include the image field in the projection
     );
 
     let likedAlbums = [];
     usersWithLikedAlbums.forEach((user) => {
       user.albums.forEach((album) => {
         if (currentUser.likedAlbums.includes(album.code)) {
-          const images = album.files.filter(
-            (file) =>
-              file.endsWith(".png") ||
-              file.endsWith(".jpg") ||
-              file.endsWith(".jpeg")
-          );
-          const videos = album.files.filter((file) => file.endsWith(".mp4"));
+          const images = album.content.filter((file) =>
+            file.name.match(/\.(png|jpg|jpeg)$/i));
+          const videos = album.content.filter((file) =>
+            file.name.match(/\.(mp4)$/i));
           likedAlbums.push({
             code: album.code,
             thumbnail: [...images, ...videos],
             userName: user.name,
+            userImage: user.image, // Include the owner's profile image
             videoTitle: album.title,
             viewsNumber: album.views,
             videosNumber: videos.length,
@@ -649,14 +660,13 @@ const getLikedAlbums = async (req, res) => {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    res
-      .status(500)
-      .json({
-        error: "Failed to retrieve liked albums",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to retrieve liked albums",
+      details: error.message,
+    });
   }
 };
+
 
 const getMediaAll = async (req, res) => {
   try {
@@ -676,49 +686,57 @@ const getMediaAll = async (req, res) => {
 
     res.status(200).json({ albums: allAlbums });
   } catch (e) {
-    res.status(500).json({ error: "Failed to retrieve albums", details: e.message });
+    res
+      .status(500)
+      .json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
-
-
 
 const getNotifications = async (req, res) => {
   const { token } = req.cookies;
 
   if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+    return res.status(401).json({ error: "No token provided" });
   }
 
   try {
-      const decoded = jwt.verify(token, jwtSecret);
-      const userId = decoded.id;
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
 
-      const user = await User.findById(userId).select("notifications");
-      if (!user) {
-          return res.status(404).json({ error: "User not found" });
-      }
+    const user = await User.findById(userId).select("notifications");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-      const enhancedNotifications = await Promise.all(user.notifications.map(async (notification) => {
-          // Find the user who made the comment
-          const commentingUser = await User.findById(notification.commentingUserId).select("name");
+    const enhancedNotifications = await Promise.all(
+      user.notifications.map(async (notification) => {
+        // Find the user who made the comment
+        const commentingUser = await User.findById(
+          notification.commentingUserId
+        ).select("name");
 
-          return {
-              ...notification._doc,
-              commentingUserName: commentingUser ? commentingUser.name : "Unknown User"
-          };
-      }));
+        return {
+          ...notification._doc,
+          commentingUserName: commentingUser
+            ? commentingUser.name
+            : "Unknown User",
+        };
+      })
+    );
 
-      res.json(enhancedNotifications);
+    res.json(enhancedNotifications);
   } catch (error) {
-      if (error instanceof jwt.JsonWebTokenError) {
-          return res.status(401).json({ error: "Invalid token" });
-      }
-      res.status(500).json({ error: "Failed to retrieve notifications", details: error.message });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res
+      .status(500)
+      .json({
+        error: "Failed to retrieve notifications",
+        details: error.message,
+      });
   }
 };
-
-
-
 
 const getMediaFromFollowing = async (req, res) => {
   const { token } = req.cookies; // or get the user ID from request params or body
@@ -752,12 +770,10 @@ const getMediaFromFollowing = async (req, res) => {
     if (e instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
     } else {
-      res
-        .status(500)
-        .json({
-          error: "Failed to retrieve albums from following",
-          details: e.message,
-        });
+      res.status(500).json({
+        error: "Failed to retrieve albums from following",
+        details: e.message,
+      });
     }
   }
 };
@@ -771,8 +787,18 @@ const getAlbumByCode = async (req, res) => {
       { "albums.$": 1, name: 1, image: 1 }
     );
     if (user && user.albums.length > 0) {
-      // Include the userName in the response along with the album data
-      res.json({ userName: user.name, userImage: user.image , ...user.albums[0] });
+      // Extract the codes of all files in the content field of the album
+      const fileCodes = user.albums[0].content.map(
+        (mediaItem) => mediaItem.code
+      );
+
+      // Include the userName and fileCodes in the response along with the album data
+      res.json({
+        userName: user.name,
+        userImage: user.image,
+        album: user.albums[0],
+        fileCodes: fileCodes,
+      });
     } else {
       res.status(404).json({ error: "Album not found" });
     }
@@ -841,6 +867,140 @@ const getMoreAlbums = async (req, res) => {
   }
 };
 
+const getMediaItem = async (req, res) => {
+  const { albumCode, mediaCode } = req.params;
+
+  try {
+    const user = await User.findOne({ "albums.code": albumCode });
+    if (!user) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    const album = user.albums.find((album) => album.code === albumCode);
+    if (!album) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    let mediaIndex = -1;
+    const mediaItem = album.content.find((item, index) => {
+      if (item.code === mediaCode) {
+        mediaIndex = index;
+        return true;
+      }
+      return false;
+    });
+
+    if (!mediaItem) {
+      return res
+        .status(404)
+        .json({ error: "Media item not found in the album" });
+    }
+
+    // Extract codes of all media items in the content array
+    const contentCodes = album.content.map((item) => item.code);
+
+    // Return the media item, its index, the album code, and codes of all content
+    res.json({ mediaItem, mediaIndex, albumCode, contentCodes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+const likeMediaItem = async (req, res) => {
+  const { albumCode, mediaCode } = req.params;
+  const token = req.cookies.token; // Assuming the token is stored under the key 'token'
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    // Verify and decode the token
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id; // Replace 'id' with the appropriate field in your token payload
+
+    const user = await User.findOne({ "albums.code": albumCode });
+    if (!user) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    const album = user.albums.find(album => album.code === albumCode);
+    if (!album) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    const mediaItem = album.content.find(item => item.code === mediaCode);
+    if (!mediaItem) {
+      return res.status(404).json({ error: "Media item not found in the album" });
+    }
+    const userIdIndex = mediaItem.likesByUsers.indexOf(currentUserId);
+    console.log(userIdIndex);
+if (userIdIndex === -1) {
+  // User hasn't liked the media item yet, so like it
+  mediaItem.likes += 1;
+  mediaItem.likesByUsers.push(currentUserId);
+} else {
+  // User has already liked the media item, so unlike it
+  mediaItem.likes -= 1;
+  mediaItem.likesByUsers.splice(userIdIndex, 1);
+}
+
+await user.save();
+
+res.status(200).json({ message: "Media item like status updated successfully" });
+} catch (error) {
+  console.error(error);
+  if (error.name === "JsonWebTokenError") {
+  return res.status(401).json({ error: "Invalid token" });
+  } else {
+  return res.status(500).json({ error: "Server error" });
+  }
+  }
+  };
+  
+
+  const checkIfLiked = async (req, res) => {
+    const { albumCode, mediaCode } = req.params;
+    const token = req.cookies.token; // Assuming the token is stored under the key 'token'
+  
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, jwtSecret);
+      const currentUserId = decoded.id; // Replace 'id' with the appropriate field in your token payload
+  
+      const user = await User.findOne({ "albums.code": albumCode });
+      if (!user) {
+        return res.status(404).json({ error: "Album not found" });
+      }
+  
+      const album = user.albums.find(album => album.code === albumCode);
+      if (!album) {
+        return res.status(404).json({ error: "Album not found" });
+      }
+  
+      const mediaItem = album.content.find(item => item.code === mediaCode);
+      if (!mediaItem) {
+        return res.status(404).json({ error: "Media item not found in the album" });
+      }
+  
+      const hasLiked = mediaItem.likesByUsers.includes(currentUserId);
+      
+      res.status(200).json({ hasLiked });
+    } catch (error) {
+      console.error(error);
+      if (error.name === "JsonWebTokenError") {
+        return res.status(401).json({ error: "Invalid token" });
+      } else {
+        return res.status(500).json({ error: "Server error" });
+      }
+    }
+  };
+
+  
 const incrementAlbumViews = async (req, res) => {
   const { albumCode } = req.params;
   const viewThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -961,6 +1121,24 @@ const saveAlbum = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Search for the album across all users
+    let albumDetails = null;
+    const allUsersWithAlbum = await User.aggregate([
+      { $match: { "albums.code": albumCode } },
+      { $unwind: "$albums" },
+      { $match: { "albums.code": albumCode } },
+      { $limit: 1 },
+      { $project: { "albums.originalOwnerName": 1, "albums.originalOwnerImage": 1 } }
+    ]);
+      console.log(allUsersWithAlbum);
+    if (allUsersWithAlbum.length > 0) {
+      const album = allUsersWithAlbum[0].albums;
+      albumDetails = {
+        originalOwnerName: album.originalOwnerName,
+        originalOwnerImage: album.originalOwnerImage
+      };
+    }
+
     let update;
     if (user.savedAlbums.includes(albumCode)) {
       // If the album is already saved, remove it
@@ -971,22 +1149,26 @@ const saveAlbum = async (req, res) => {
     }
 
     // Update the user's savedAlbums
-    const updatedUser = await User.findByIdAndUpdate(userId, update, { new: true });
+    await User.findByIdAndUpdate(userId, update, { new: true });
 
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User update failed" });
-    }
-
-    res.json({ 
-      message: updatedUser.savedAlbums.includes(albumCode) ? "Album saved successfully" : "Album unsaved successfully" 
+    res.json({
+      message: user.savedAlbums.includes(albumCode)
+        ? "Album unsaved successfully"
+        : "Album saved successfully",
+      albumDetails,
     });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    res.status(500).json({ error: "Failed to update album saved status", details: error.message });
+    res.status(500).json({
+      error: "Failed to update album saved status",
+      details: error.message,
+    });
   }
 };
+
+
 
 const repostAlbum = async (req, res) => {
   const { albumCode } = req.params;
@@ -1007,14 +1189,18 @@ const repostAlbum = async (req, res) => {
       return res.status(404).json({ error: "Original album not found" });
     }
 
-    const originalAlbum = originalOwner.albums.find(album => album.code === albumCode);
+    const originalAlbum = originalOwner.albums.find(
+      (album) => album.code === albumCode
+    );
     if (!originalAlbum) {
       return res.status(404).json({ error: "Original album not found" });
     }
 
     // Check if the current user already reposted the album
     if (originalAlbum.repostsByUsers.includes(userId)) {
-      return res.status(400).json({ error: "You have already reposted this album" });
+      return res
+        .status(400)
+        .json({ error: "You have already reposted this album" });
     }
 
     // Increment the repost count and add the current user to repostsByUsers
@@ -1026,7 +1212,7 @@ const repostAlbum = async (req, res) => {
     const repostedAlbum = {
       ...originalAlbum.toObject(),
       _id: new mongoose.Types.ObjectId(), // Generate a new ID
-      originalOwnerName: originalOwner.name // Add the original owner's name
+      originalOwnerName: originalOwner.name, // Add the original owner's name
     };
 
     // Add the reposted album to the current user's albums
@@ -1038,45 +1224,48 @@ const repostAlbum = async (req, res) => {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    res.status(500).json({ error: "Failed to repost album", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Failed to repost album", details: error.message });
   }
 };
-
 
 const checkIfAlbumRepostedByUser = async (req, res) => {
   const { albumCode } = req.params; // Get the album code from the request parameters
   const { token } = req.cookies; // Get the token from cookies
 
   if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+    return res.status(401).json({ error: "No token provided" });
   }
 
   try {
-      // Decode the token to get the user's ID
-      const decoded = jwt.verify(token, jwtSecret);
-      const userId = decoded.id;
+    // Decode the token to get the user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
 
-      // Find the album by its code
-      const album = await User.findOne({ "albums.code": albumCode }, { "albums.$": 1 });
+    // Find the album by its code
+    const album = await User.findOne(
+      { "albums.code": albumCode },
+      { "albums.$": 1 }
+    );
 
-      if (!album || album.albums.length === 0) {
-          return res.status(404).json({ error: "Album not found" });
-      }
+    if (!album || album.albums.length === 0) {
+      return res.status(404).json({ error: "Album not found" });
+    }
 
-      // Check if the user's ID is in the repostsByUsers array
-      const isReposted = album.albums[0].repostsByUsers.includes(userId);
+    // Check if the user's ID is in the repostsByUsers array
+    const isReposted = album.albums[0].repostsByUsers.includes(userId);
 
-      res.json({ isReposted });
+    res.json({ isReposted });
   } catch (error) {
-      if (error instanceof jwt.JsonWebTokenError) {
-          return res.status(401).json({ error: "Invalid token" });
-      }
-      res.status(500).json({ error: "Failed to check repost status", details: error.message });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res
+      .status(500)
+      .json({ error: "Failed to check repost status", details: error.message });
   }
 };
-
-
-
 
 const getSavedAlbums = async (req, res) => {
   const { token } = req.cookies; // Assuming the user's token is stored in cookies
@@ -1091,7 +1280,7 @@ const getSavedAlbums = async (req, res) => {
     const userId = decoded.id;
 
     // Find the user and get their savedAlbums
-    const user = await User.findById(userId).select('savedAlbums name image');
+    const user = await User.findById(userId).select("savedAlbums name image");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1107,18 +1296,27 @@ const getSavedAlbums = async (req, res) => {
       const userAlbums = u.albums.map((album) => ({
         ...album,
         userName: user.name, // Add the userName for each album
-        userImage: user.image // Add the userImage for each album
+        userImage: user.image, // Add the userImage for each album
       }));
       acc.push(...userAlbums);
       return acc;
     }, []);
 
-    res.json({ userName: user.name, userImage: user.image, savedAlbums: albums });
+    res.json({
+      userName: user.name,
+      userImage: user.image,
+      savedAlbums: albums,
+    });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    res.status(500).json({ error: "Failed to retrieve saved albums", details: error.message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to retrieve saved albums",
+        details: error.message,
+      });
   }
 };
 
@@ -1127,29 +1325,33 @@ const isAlbumSaved = async (req, res) => {
   const { token } = req.cookies;
 
   if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+    return res.status(401).json({ error: "No token provided" });
   }
 
   try {
-      const decoded = jwt.verify(token, jwtSecret);
-      const userId = decoded.id;
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
 
-      const user = await User.findById(userId);
-      if (!user) {
-          return res.status(404).json({ error: "User not found" });
-      }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-      const isSaved = user.savedAlbums.includes(albumCode);
+    const isSaved = user.savedAlbums.includes(albumCode);
 
-      res.json({ isSaved });
+    res.json({ isSaved });
   } catch (error) {
-      if (error instanceof jwt.JsonWebTokenError) {
-          return res.status(401).json({ error: "Invalid token" });
-      }
-      res.status(500).json({ error: "Failed to check if album is saved", details: error.message });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res
+      .status(500)
+      .json({
+        error: "Failed to check if album is saved",
+        details: error.message,
+      });
   }
 };
-
 
 const findUserByToken = async (req, res) => {
   const { idsArray } = req.body;
@@ -1172,94 +1374,141 @@ const findUserByToken = async (req, res) => {
   }
 };
 
+const getTopUsersByViews = async (req, res) => {
+  try {
+    const topUsers = await User.aggregate([
+      // Unwind the albums array to process each album individually
+      { $unwind: "$albums" },
+      // Group by user and sum their album views
+      {
+        $group: {
+          _id: "$_id",
+          totalViews: { $sum: "$albums.views" },
+          name: { $first: "$name" },
+          userImage: { $first: "$image" }, // Include the user image
+        }
+      },
+      // Sort by totalViews in descending order
+      { $sort: { totalViews: -1 } },
+      // Limit to top 10
+      { $limit: 10 },
+      // Project the desired fields
+      {
+        $project: {
+          _id: 0, // Exclude the _id field
+          name: 1, // Include the name field
+          userImage: 1, // Include the user image field
+          totalViews: 1, // Include the totalViews field
+        }
+      }
+    ]);
+
+    res.json(topUsers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
 const addCommentToAlbum = async (req, res) => {
   const { albumCode } = req.params;
   const { comment } = req.body;
   const { token } = req.cookies;
 
   if (!token) {
-      return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
-      // Verify the token and get the user's ID
-      const decoded = jwt.verify(token, jwtSecret);
-      const userId = decoded.id;
+    // Verify the token and get the user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
 
-      // Find the album and add the comment
-      const user = await User.findOneAndUpdate(
-          { "albums.code": albumCode },
-          {
-              $push: {
-                  "albums.$.comments": {
-                      user: userId,
-                      text: comment,
-                      commentDate: new Date(),
-                  },
-              },
+    // Find the album and add the comment
+    const user = await User.findOneAndUpdate(
+      { "albums.code": albumCode },
+      {
+        $push: {
+          "albums.$.comments": {
+            user: userId,
+            text: comment,
+            commentDate: new Date(),
           },
-          { new: true }
-      );
+        },
+      },
+      { new: true }
+    );
 
-      if (!user) {
-          return res.status(404).json({ error: "Album not found" });
-      }
-
-      // Extract the specific album
-      const album = user.albums.find((album) => album.code === albumCode);
-
-      // Find all users who commented on this album in the last 24 hours
-      const timeLimit = new Date(new Date().getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
-      const notifiedUsers = new Set();
-
-      const recentComments = album.comments.filter(comment => new Date(comment.commentDate) > timeLimit);
-      recentComments.forEach(comment => {
-          if (comment.user.toString() !== userId.toString()) {
-              notifiedUsers.add(comment.user.toString());
-          }
-      });
-
-      // Send notifications to these users
-      for (const otherUserId of notifiedUsers) {
-        console.log(otherUserId)
-        await addNotification(
-            otherUserId, 
-            'comment', 
-            `New comment on the post  ${album.title.toUpperCase()}`, 
-            albumCode,
-            album.title, // Pass the album title
-            userId // Pass the ID of the user who made the comment
-        );
+    if (!user) {
+      return res.status(404).json({ error: "Album not found" });
     }
 
-      res.json({ message: "Comment added successfully" });
-  } catch (e) {
-      if (e instanceof jwt.JsonWebTokenError) {
-          res.status(401).json({ error: "Invalid token" });
-      } else {
-          res.status(500).json({ error: "Failed to add comment", details: e.message });
+    // Extract the specific album
+    const album = user.albums.find((album) => album.code === albumCode);
+
+    // Find all users who commented on this album in the last 24 hours
+    const timeLimit = new Date(new Date().getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+    const notifiedUsers = new Set();
+
+    const recentComments = album.comments.filter(
+      (comment) => new Date(comment.commentDate) > timeLimit
+    );
+    recentComments.forEach((comment) => {
+      if (comment.user.toString() !== userId.toString()) {
+        notifiedUsers.add(comment.user.toString());
       }
+    });
+
+    // Send notifications to these users
+    for (const otherUserId of notifiedUsers) {
+      console.log(otherUserId);
+      await addNotification(
+        otherUserId,
+        "comment",
+        `New comment on the post  ${album.title.toUpperCase()}`,
+        albumCode,
+        album.title, // Pass the album title
+        userId // Pass the ID of the user who made the comment
+      );
+    }
+
+    res.json({ message: "Comment added successfully" });
+  } catch (e) {
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res
+        .status(500)
+        .json({ error: "Failed to add comment", details: e.message });
+    }
   }
 };
 
-const addNotification = async (userId, type, message, albumCode, albumTitle, commentingUserId) => {
+const addNotification = async (
+  userId,
+  type,
+  message,
+  albumCode,
+  albumTitle,
+  commentingUserId
+) => {
   try {
-      await User.findByIdAndUpdate(userId, {
-          $push: { notifications: { 
-              type, 
-              message, 
-              albumCode, 
-              albumTitle, // The title of the album
-              commentingUserId // The ID of the user who made the comment
-          }},
-      });
+    await User.findByIdAndUpdate(userId, {
+      $push: {
+        notifications: {
+          type,
+          message,
+          albumCode,
+          albumTitle, // The title of the album
+          commentingUserId, // The ID of the user who made the comment
+        },
+      },
+    });
   } catch (error) {
-      console.error("Error adding notification:", error);
+    console.error("Error adding notification:", error);
   }
 };
-
-
-
 
 const getAlbumComments = async (req, res) => {
   const { albumCode } = req.params;
@@ -1280,9 +1529,11 @@ const getAlbumComments = async (req, res) => {
     }
 
     // Check if comments are hidden for this album
-    console.log("album:" , album);
+    console.log("album:", album);
     if (album.hideComments) {
-      return res.status(403).json({ error: "Comments are hidden for this album" });
+      return res
+        .status(403)
+        .json({ error: "Comments are hidden for this album" });
     }
 
     // Fetch usernames for each comment
@@ -1299,12 +1550,13 @@ const getAlbumComments = async (req, res) => {
     // Return the comments of the album with usernames
     res.json(commentsWithUsernames);
   } catch (e) {
-    res.status(500).json({ error: "Failed to retrieve comments", details: e.message });
+    res
+      .status(500)
+      .json({ error: "Failed to retrieve comments", details: e.message });
   }
 };
 
-
-const hideAllComments = async (req, res) =>  {
+const hideAllComments = async (req, res) => {
   const { token } = req.cookies; // Assuming the current user's ID is in a token
 
   try {
@@ -1319,7 +1571,7 @@ const hideAllComments = async (req, res) =>  {
     }
 
     // Toggle hideComments field for each album
-    user.albums.forEach(album => {
+    user.albums.forEach((album) => {
       album.hideComments = !album.hideComments;
     });
 
@@ -1327,7 +1579,6 @@ const hideAllComments = async (req, res) =>  {
     await user.save();
 
     res.json({ message: "Comment visibility toggled successfully" });
-
   } catch (e) {
     if (e instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
@@ -1357,16 +1608,15 @@ const editProfileOptions = async (req, res) => {
     }
 
     // Check if any album has hideComments set to true
-    const anyHidden = user.albums.some(album => album.hideComments);
+    const anyHidden = user.albums.some((album) => album.hideComments);
 
     // Also check if the user's account is private
     const isPrivate = user.isPrivate;
 
-    res.json({ 
+    res.json({
       hidden: anyHidden,
-      isPrivate: isPrivate
+      isPrivate: isPrivate,
     });
-
   } catch (e) {
     if (e instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
@@ -1380,8 +1630,6 @@ const editProfileOptions = async (req, res) => {
     }
   }
 };
-
-
 
 const followUser = async (req, res) => {
   const { usernameToFollow } = req.body;
@@ -1467,12 +1715,10 @@ const checkIfFollowingAlbumOwner = async (req, res) => {
     if (e instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: "Invalid token" });
     } else {
-      res
-        .status(500)
-        .json({
-          error: "Failed to check following status",
-          details: e.message,
-        });
+      res.status(500).json({
+        error: "Failed to check following status",
+        details: e.message,
+      });
     }
   }
 };
@@ -1506,12 +1752,10 @@ const getFollowingInfo = async (req, res) => {
 
     res.json(followingInfo);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to retrieve following information",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to retrieve following information",
+      details: error.message,
+    });
   }
 };
 
@@ -1532,18 +1776,14 @@ const getUserStats = async (req, res) => {
     const name = user.name;
     res.json({ followersCount, followingCount, image, name });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to retrieve user follow stats",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to retrieve user follow stats",
+      details: error.message,
+    });
   }
 };
 
 // Add this function in your controller file
-
-
 
 module.exports = {
   register,
@@ -1576,6 +1816,9 @@ module.exports = {
   getMediaFromFollowing,
   getAlbumByCode,
   getMoreAlbums,
+  getMediaItem,
+  likeMediaItem,
+  checkIfLiked,
   searchAlbums,
   incrementAlbumViews,
   addLikeToAlbum,
@@ -1585,6 +1828,7 @@ module.exports = {
   getSavedAlbums,
   isAlbumSaved,
   findUserByToken,
+  getTopUsersByViews,
   addCommentToAlbum,
   getAlbumComments,
   hideAllComments,
