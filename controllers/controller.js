@@ -54,7 +54,7 @@ const login = async (req, res) => {
             return res.status(500).json({ error: "JWT generation failed" });
           }
           // Send the token as a JSON response instead of setting it as a cookie
-          console.log(token);
+          console.log("token:", token);
           res.json({ message: "Login successful", token: token });
         }
       );
