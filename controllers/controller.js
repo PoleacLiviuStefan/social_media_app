@@ -268,6 +268,7 @@ const togglePrivacy = async (req, res) => {
 
 const profile = (req, res) => {
   const { token } = req.cookies;
+  console.log("token", token);
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
