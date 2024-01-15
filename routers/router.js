@@ -42,7 +42,7 @@ router.post("/change-email",controller.sendEmailChange);
 router.post("/reset-email/:id/:token", controller.changeEmail);
 router.post('/togglePrivacy', controller.togglePrivacy);
 router.get("/disconnect", controller.logout);
-router.get("/profile", controller.profile);
+router.post("/profile", controller.profile);
 router.post("/removeProfileImage",controller.removeProfileImage);
 router.post('/uploadProfileImage', upload.single('image'), controller.uploadProfileImage);
 router.get("/mainInfo",controller.getCurrentUserInfo)
