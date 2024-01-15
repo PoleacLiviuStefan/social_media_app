@@ -53,12 +53,11 @@ const login = async (req, res) => {
             return res.status(500).json({ error: "JWT generation failed" });
           }
           console.log(token);
-          res
-            .cookie("token", token, {
-              httpOnly: false,
-              maxAge: 3600000 * 5,
-              secure: true,
-              sameSite: "none",
+          res.cookie("token", token, {
+            sameSite : "none",
+            secure: true,
+            domain: "https://thler.com"
+            httpOnly: false
             })
             .json("Login successful");
         }
