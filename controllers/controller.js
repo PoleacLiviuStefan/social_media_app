@@ -14,7 +14,8 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com"; //http://localhost:3000
+const serverURL = "http://localhost:3000"; //https://blisio-backend-d30f62efe387.herokuapp.com
+const clientURL = "https://thler.com"
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -56,7 +57,7 @@ const login = async (req, res) => {
           res.cookie("token", token, {
             sameSite : "none",
             secure: true,
-            domain: "https://thler.com"
+            domain: clientURL,
             httpOnly: false
             })
             .json("Login successful");
@@ -84,15 +85,16 @@ const handleGoogleCallback = (req, res) => {
 };
 
 const getReddit = (req, res, next) => {
-  passport.authenticate("reddit", {
-    state: "someRandomString", // Reddit requires a 'state' parameter for CSRF protection
-    duration: "permanent", // or 'temporary' depending on your needs
+  passport.authenticate('reddit', {
+    duration: 'permanent',
   })(req, res, next);
 };
 
-const handleRedditCallback = (req, res) => {
-  // Successful authentication
-  res.redirect(`${serverURL}/api/login/success`);
+const handleRedditCallback = (req, res, next) => {
+  passport.authenticate('reddit', {
+    successRedirect: '/',
+    failureRedirect: '/login'
+  })(req, res, next);
 };
 
 const getTwitter = (req, res, next) => {
@@ -131,7 +133,7 @@ const loginSuccess = (req, res) => {
       });
 
       // Redirect to the desired URL
-      res.redirect("https://thler.com");
+      res.redirect(clientURL);
     }
   );
 };
@@ -161,7 +163,7 @@ const forgotPassword = (req, res) => {
       from: "stefan.liviu286@gmail.com",
       to: "quequeg.liviu@gmail.com",
       subject: "Reset your password",
-      text: `https://thler.com/reset-password/${user._id}/${token}`,
+      text: `${clientURL}/reset-password/${user._id}/${token}`,
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -215,7 +217,7 @@ const sendEmailChange = (req, res) => {
       from: "stefan.liviu286@gmail.com",
       to: "quequeg.liviu@gmail.com",
       subject: "Reset your password",
-      text: `https://thler.com/reset-email/${user._id}/${token}`,
+      text: `${clientURL}/reset-email/${user._id}/${token}`,
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
