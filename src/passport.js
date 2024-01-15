@@ -13,7 +13,7 @@ passport.use(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      callbackURL: "/api/google/callback",
+      callbackURL: "https://www.api.thler.com/api/google/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {
@@ -44,7 +44,7 @@ passport.use(
     {
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callbackURL: "/api/twitter/callback",
+      callbackURL: "https://www.api.thler.com/api/twitter/callback",
     },
     async (token, tokenSecret, profile, done) => {
       try {
