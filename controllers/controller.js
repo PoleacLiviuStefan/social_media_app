@@ -53,9 +53,15 @@ const login = async (req, res) => {
           if (err) {
             return res.status(500).json({ error: "JWT generation failed" });
           }
-          // Send the token as a JSON response instead of setting it as a cookie
-          console.log("token:", token);
-          res.json({ message: "Login successful", token: token });
+          console.log(token);
+          res
+            .cookie("token", token, {
+              httpOnly: false,
+              maxAge: 3600000 * 5,
+              secure: true,
+              sameSite: "none",
+            })
+            .json("Login successful");
         }
       );
     } else {
@@ -120,8 +126,16 @@ const loginSuccess = (req, res) => {
         return res.status(500).json({ error: "JWT generation failed" });
       }
 
-      // Redirect to the client URL with the token as a query parameter
-      res.redirect(`${clientURL}?token=${token}`);
+      // Set the JWT as a cookie
+      res.cookie("token", token, {
+        httpOnly: false,
+        maxAge: 3600000 * 5,
+        secure: true,
+        sameSite: "none",
+      });
+
+      // Redirect to the desired URL
+      res.redirect("https://thler.com");
     }
   );
 };
