@@ -14,7 +14,7 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "http://localhost:3000"; //https://blisio-backend-d30f62efe387.herokuapp.com
+const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com"; //http://localhost:3000
 const clientURL = "https://thler.com"
 
 const test = (req, res) => {
@@ -81,7 +81,7 @@ const getGoogle = (req, res, next) => {
 
 const handleGoogleCallback = (req, res) => {
   // Successful authentication
-  res.redirect(`${serverURL}/api/login/success`);
+  res.redirect(`${clientURL}/api/login/success`);
 };
 
 const getReddit = (req, res, next) => {
