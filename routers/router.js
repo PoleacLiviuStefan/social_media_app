@@ -33,7 +33,9 @@ router.get('/google/callback',
 router.get('/reddit', controller.getReddit);
 router.get('/reddit/callback', controller.handleRedditCallback);
 router.get('/twitter', controller.getTwitter);
-router.get('/twitter/callback', controller.handleTwitterCallback);
+router.get('/twitter/callback', 
+passport.authenticate('twitter', { failureRedirect: '/login/failed' }),
+controller.handleTwitterCallback);
 router.get("/login/success",controller.loginSuccess);
 router.get("/login/failed",controller.loginFailed);
 router.post("/recover",controller.forgotPassword)
