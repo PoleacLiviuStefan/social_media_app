@@ -113,6 +113,7 @@ const handleTwitterCallback = (req, res) => {
 };
 
 const loginSuccess = (req, res) => {
+  console.log("Req este:");
   if (!req.user) {
     return res.status(401).json({ error: "User not authenticated" });
   }
