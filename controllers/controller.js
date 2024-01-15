@@ -81,7 +81,7 @@ const getGoogle = (req, res, next) => {
 
 const handleGoogleCallback = (req, res) => {
   // Successful authentication
-  res.redirect(`${clientURL}/api/login/success`);
+  res.redirect(`${serverURL}/api/login/success`);
 };
 
 const getReddit = (req, res, next) => {
