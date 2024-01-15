@@ -517,12 +517,13 @@ const uploadProfileImage = async (req, res) => {
 const logout = (req, res) => {
   res
     .clearCookie("token", {
-      httpOnly: true,
+      httpOnly: false,
       maxAge: 3600000 * 5,
       secure: true,
       sameSite: "none",
     })
     .json("Logout successful");
+    
 };
 
 const upload = (req, res) => {
