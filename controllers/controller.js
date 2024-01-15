@@ -53,7 +53,7 @@ const login = async (req, res) => {
           if (err) {
             return res.status(500).json({ error: "JWT generation failed" });
           }
-          console.log(token);
+      
           res
             .cookie("token", token, {
               httpOnly: false,
@@ -283,6 +283,7 @@ const togglePrivacy = async (req, res) => {
 const profile = (req, res) => {
   const { token } = req.cookies;
   console.log("toate coockie-urile", req.cookies);
+  console.log("token din profile", token);
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
