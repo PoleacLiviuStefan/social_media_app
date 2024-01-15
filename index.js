@@ -24,9 +24,13 @@ app.use(express.json());
 app.enable('trust proxy')
 // Session configuration here (before passport.session())
 app.use(session({
-    secret: 'Your Secret Key', // Replace with your own secret key
+    secret: process.env.SESSION_SECRET, // Replace with your own secret key
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { maxAge: 604800000, //one week(1000*60*60*24*7)
+    sameSite: "none",
+    secure : true
+   }, 
 }));
 
 app.use(passport.initialize());
