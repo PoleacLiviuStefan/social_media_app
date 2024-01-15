@@ -15,7 +15,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
 const serverURL = "https://blisio-backend-d30f62efe387.herokuapp.com"; //http://localhost:3000
-const clientURL = "https://thler.com"
+const clientURL = "https://thler.com"  //http://localhost:5173
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -53,14 +53,9 @@ const login = async (req, res) => {
           if (err) {
             return res.status(500).json({ error: "JWT generation failed" });
           }
+          // Send the token as a JSON response instead of setting it as a cookie
           console.log(token);
-          res.cookie("token", token, {
-            sameSite : "none",
-            secure: true,
-            domain: "thler.com",
-            httpOnly: false
-            })
-            .json("Login successful");
+          res.json({ message: "Login successful", token: token });
         }
       );
     } else {
@@ -70,6 +65,7 @@ const login = async (req, res) => {
     res.status(500).json({ error: "Login failed", details: e.message });
   }
 };
+
 
 const getGoogle = (req, res, next) => {
   passport.authenticate("google", { scope: ["profile", "email"] })(
@@ -124,19 +120,12 @@ const loginSuccess = (req, res) => {
         return res.status(500).json({ error: "JWT generation failed" });
       }
 
-      // Set the JWT as a cookie
-      res.cookie("token", token, {
-        httpOnly: false,
-        maxAge: 3600000 * 5,
-        secure: true,
-        sameSite: "none",
-      });
-
-      // Redirect to the desired URL
-      res.redirect(clientURL);
+      // Redirect to the client URL with the token as a query parameter
+      res.redirect(`${clientURL}?token=${token}`);
     }
   );
 };
+
 
 const loginFailed = (req, res) => {
   res.status(401).json({ message: "Log In failure" });
