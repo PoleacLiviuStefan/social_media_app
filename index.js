@@ -36,7 +36,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(express.static(path.join(__dirname, 'build'))); // Serve static files from the 'build' folder
+app.use(express.static('public'));
 
 app.use('/api', router);
 passport.debug = true;
@@ -45,6 +45,12 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
+const indexPath = path.join(__dirname, 'build', 'index.html');
+console.log(indexPath); // Log to check the path
+app.get('*', (req, res) => {
+    res.sendFile(indexPath);
+});
+
 // Socket.IO setup
 const server = http.createServer(app);
 const io = socketIo(server, { cors: corsOptions });
