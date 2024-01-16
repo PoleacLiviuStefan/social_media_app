@@ -35,14 +35,11 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.get("/*", function (req, res) {
-    res.sendFile(path.join(__dirname, "dist/index.html"), function (err) {
-      if (err) {
-        res.status(500).send(err);
-      }
-    });
-  });
-  
+app.get('/', (req, res) => {
+    const error = new Error('Not Found'); //Error object
+    error.status = 404;
+    res.status(200).sendFile(path.join(__dirname+'/dist/index.html'));
+}); //THE REQUEST CONTENT
 app.use(express.static('public'));
 app.use('/api', router);
 passport.debug = true;
