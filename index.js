@@ -35,7 +35,14 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
+app.get("/*", function (req, res) {
+    res.sendFile(path.join(__dirname, "dist/index.html"), function (err) {
+      if (err) {
+        res.status(500).send(err);
+      }
+    });
+  });
+  
 app.use(express.static('public'));
 app.use('/api', router);
 passport.debug = true;
