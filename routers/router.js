@@ -59,6 +59,7 @@ router.get("/:albumCode/:mediaCode/isLiked",controller.checkIfLiked)
 router.get("/hideAllComents", controller.hideAllComments);
 router.get("/checkOptions", controller.editProfileOptions);
 router.get("/getMediaAll", controller.getMediaAll);
+router.get("/getRandomAlbum", controller.getRandomAlbums)
 router.get("/getSavedAlbums", controller.getSavedAlbums);
 router.get('/isAlbumSaved/:albumCode', controller.isAlbumSaved);
 router.get('/notifications', controller.getNotifications);

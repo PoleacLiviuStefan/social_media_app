@@ -714,6 +714,43 @@ const getMediaAll = async (req, res) => {
   }
 };
 
+const getRandomAlbums = async (req, res) => {
+  try {
+    // Define the number of random albums you want to retrieve
+    const numberOfRandomAlbums = 10; // You can adjust this number as needed
+
+    // Fetch random albums from your database
+    const randomAlbums = await Album.aggregate([
+      { $sample: { size: numberOfRandomAlbums } },
+      {
+        $lookup: {
+          from: "users", // Adjust to your User collection name
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          description: 1,
+          // Add other fields you want to include
+          userName: { $arrayElemAt: ["$user.name", 0] },
+          userImage: { $arrayElemAt: ["$user.image", 0] },
+        },
+      },
+    ]);
+
+    res.status(200).json({ albums: randomAlbums });
+  } catch (e) {
+    res
+      .status(500)
+      .json({ error: "Failed to retrieve random albums", details: e.message });
+  }
+};
+
+
 const getNotifications = async (req, res) => {
   const { token } = req.cookies;
 
@@ -1842,6 +1879,7 @@ module.exports = {
   getMediaByUserName,
   getLikedAlbums,
   getMediaAll,
+  getRandomAlbums,
   getNotifications,
   getMediaFromFollowing,
   getAlbumByCode,
