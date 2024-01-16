@@ -36,15 +36,15 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(express.static('public'));
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname + '/build/index.html'));
-  });
+app.use(express.static(path.join(__dirname, 'build'))); // Serve static files from the 'build' folder
+
 app.use('/api', router);
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 // Socket.IO setup
 const server = http.createServer(app);
 const io = socketIo(server, { cors: corsOptions });
