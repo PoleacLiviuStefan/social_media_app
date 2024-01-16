@@ -14,7 +14,7 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "http://localhost:3000"; //https://www.api.thler.com
+const serverURL = "https://www.api.thler.com"; //http://localhost:3000
 const clientURL = "https://thler.com"  //http://localhost:5173
 
 const test = (req, res) => {
