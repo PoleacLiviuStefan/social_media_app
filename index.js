@@ -42,14 +42,6 @@ app.use('/api', router);
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-const indexPath = path.join(__dirname, 'build', 'index.html');
-console.log(indexPath); // Log to check the path
-app.get('*', (req, res) => {
-    res.sendFile(indexPath);
-});
 
 // Socket.IO setup
 const server = http.createServer(app);
