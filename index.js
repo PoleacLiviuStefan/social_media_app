@@ -14,7 +14,7 @@ dotenv.config();
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "https://thler.com", // Update as per your client URL http://localhost:5173
+    origin: "http://localhost:5173", // Update as per your client URL https://thler.com
 };
 
 app.use(cors(corsOptions));
