@@ -716,39 +716,34 @@ const getMediaAll = async (req, res) => {
 
 const getRandomAlbums = async (req, res) => {
   try {
-    // Define the number of random albums you want to retrieve
-    const numberOfRandomAlbums = 10; // You can adjust this number as needed
+    // Fetch all users with selected fields
+    const users = await User.find({}, "name image albums").exec();
 
-    // Fetch random albums from your database
-    const randomAlbums = await Album.aggregate([
-      { $sample: { size: numberOfRandomAlbums } },
-      {
-        $lookup: {
-          from: "users", // Adjust to your User collection name
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          description: 1,
-          // Add other fields you want to include
-          userName: { $arrayElemAt: ["$user.name", 0] },
-          userImage: { $arrayElemAt: ["$user.image", 0] },
-        },
-      },
-    ]);
+    // Flatten the array of user albums
+    let allAlbums = users.reduce((acc, user) => {
+      const userAlbums = user.albums.map((album) => ({
+        ...album._doc,
+        userName: user.name,
+        userImage: user.image,
+      }));
+      acc.push(...userAlbums);
+      return acc;
+    }, []);
 
-    res.status(200).json({ albums: randomAlbums });
+    // Shuffle the albums array
+    for (let i = allAlbums.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allAlbums[i], allAlbums[j]] = [allAlbums[j], allAlbums[i]];
+    }
+
+    res.status(200).json({ albums: allAlbums });
   } catch (e) {
     res
       .status(500)
-      .json({ error: "Failed to retrieve random albums", details: e.message });
+      .json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
+
 
 
 const getNotifications = async (req, res) => {
