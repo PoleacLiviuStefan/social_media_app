@@ -41,7 +41,7 @@ app.use(express.static('public'));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/api', router);
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, 'src', 'index.html'));
 });
 
 passport.debug = true;
