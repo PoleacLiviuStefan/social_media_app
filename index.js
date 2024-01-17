@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require("cors");
@@ -37,6 +38,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/api', router);
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
