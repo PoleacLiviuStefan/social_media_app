@@ -239,11 +239,44 @@ const sendEmailChange = (req, res) => {
 };
 
 const changeEmail = (req, res) => {
-  const { id, token } = req.params;
+  const { id } = req.params; // Keep getting the id from the params
   const { email } = req.body;
+  const { token } = req.cookies; // Get the token from the cookies
 
-  User.findByIdAndUpdate({ _id: id }, { email: email });
+  // You can add a check here to ensure the token exists
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  // Verify the token (similar to what you have in the profile function)
+  jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Ensure the user id from the token matches the id from the params
+    if (userData.id !== id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    try {
+      const updatedUser = await User.findByIdAndUpdate(
+        { _id: id },
+        { email: email },
+        { new: true } // to return the updated document
+      );
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ message: "Email updated successfully" });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ error: "Email update failed", details: e.message });
+    }
+  });
 };
+
 
 const togglePrivacy = async (req, res) => {
   const { token } = req.cookies; // Get the token from cookies
