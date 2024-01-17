@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const session = require('express-session'); // Assuming you're using express-session
 const passport = require('./src/passport'); // Your Passport configuration
+const frontend = path.join(__dirname, 'react-app/dist');
 dotenv.config();
 
 // Configure CORS
@@ -40,10 +41,10 @@ app.use(passport.session());
 app.use(express.static('public'));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/api', router);
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'index.html'));
+app.use('/', express.static(frontend));
+app.use(function (req, res, next) {
+    res.sendFile(path.join(frontend, 'index.html'));
 });
-
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
