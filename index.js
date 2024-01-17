@@ -48,7 +48,9 @@ app.use(function (req, res, next) {
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-
+app.get('/*', (request, response) => {
+    response.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 // Socket.IO setup
 const server = http.createServer(app);
 const io = socketIo(server, { cors: corsOptions });
