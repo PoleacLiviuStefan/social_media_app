@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const session = require('express-session'); // Assuming you're using express-session
 const passport = require('./src/passport'); // Your Passport configuration
-const frontend = path.join(__dirname, 'react-app/dist');
+const frontend = path.join(__dirname, 'react-app/build');
 dotenv.config();
 
 // Configure CORS
