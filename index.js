@@ -35,15 +35,13 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname, '/index.html'), function(err) {
-      if (err) {
-        res.status(500).send(err)
-      }
-    })
-  })
+
 app.use(express.static('public'));
 app.use('/api', router);
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
