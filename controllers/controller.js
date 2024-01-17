@@ -156,16 +156,18 @@ const forgotPassword = (req, res) => {
 
     const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: "1d" });
     var transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "mail.thler.com",
+      port: 465,
+      secure:true,
       auth: {
-        user: "stefan.liviu286@gmail.com",
-        pass: "vupb ifns blyw byzt",
+        user: "contact@thler.com",
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
     var mailOptions = {
-      from: "stefan.liviu286@gmail.com",
-      to: "quequeg.liviu@gmail.com",
+      from: "contact@thler.com",
+      to: email,
       subject: "Reset your password",
       text: `${clientURL}/reset-password/${user._id}/${token}`,
     };
@@ -210,16 +212,18 @@ const sendEmailChange = (req, res) => {
 
     const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: "1d" });
     var transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "mail.thler.com",
+      port: 465,
+      secure:true,
       auth: {
-        user: "stefan.liviu286@gmail.com",
-        pass: "vupb ifns blyw byzt",
+        user: "contact@thler.com",
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
     var mailOptions = {
-      from: "stefan.liviu286@gmail.com",
-      to: "quequeg.liviu@gmail.com",
+      from: "contact@thler.com",
+      to: email,
       subject: "Reset your password",
       text: `${clientURL}/reset-email/${user._id}/${token}`,
     };
