@@ -19,12 +19,11 @@
         try {
           // Check if user exists using email
           let user = await User.findOne({ email: profile.emails[0].value });
-
           if (!user) {
             // If user doesn't exist, create a new one
             user = await User.create({
               googleId: profile.id,
-              name: profile.displayName,
+              name: profile.displayName.replace(/\s+/g, ''),
               email: profile.emails[0].value,
               image: profile.photos[0].value,
             });
@@ -54,7 +53,7 @@
             // If user doesn't exist, create a new one
             user = await User.create({
               twitterId: profile.id,
-              name: profile.displayName,
+              name: profile.displayName.replace(/\s+/g, ''),
               // Twitter does not provide email by default
               // Add any other relevant fields
             });
