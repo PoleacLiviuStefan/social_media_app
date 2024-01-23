@@ -15,7 +15,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
 const serverURL = "https://www.api.thler.com"; //http://localhost:3001
-const clientURL = "https://nextjs-ssr-123-ce410f2237c9.herokuapp.com"  //http://localhost:3000
+const clientURL = "https://nextjs-ssr-123-ce410f2237c9.herokuapp.com"  //http://localhost:4789
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -829,6 +829,47 @@ const getNotifications = async (req, res) => {
   }
 };
 
+const deleteAccount = async (req, res) => {
+  const { token } = req.cookies; // Get the token from cookies
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    // Verify the token to get the user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Delete the user
+    await User.deleteOne({ _id: userId });
+
+    // Optionally, you could also handle any cleanup like deleting user-related data
+    // For example, deleting user's albums, notifications, etc.
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res
+        .status(500)
+        .json({
+          error: "Failed to delete account",
+          details: error.message,
+        });
+    }
+  }
+};
+
+
 const getMediaFromFollowing = async (req, res) => {
   const { token } = req.cookies; // or get the user ID from request params or body
 
@@ -1522,7 +1563,7 @@ const getTopUsersByViews = async (req, res) => {
       // Sort by totalViews in descending order
       { $sort: { totalViews: -1 } },
       // Limit to top 10
-      { $limit: 10 },
+      { $limit: 12 },
       // Project the desired fields
       {
         $project: {
@@ -1945,6 +1986,7 @@ module.exports = {
   getMediaAll,
   getRandomAlbums,
   getNotifications,
+  deleteAccount,
   getMediaFromFollowing,
   getAlbumByCode,
   getMoreAlbums,

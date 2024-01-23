@@ -66,6 +66,7 @@ router.get("/getRandomAlbum", controller.getRandomAlbums)
 router.get("/getSavedAlbums", controller.getSavedAlbums);
 router.get('/isAlbumSaved/:albumCode', controller.isAlbumSaved);
 router.get('/notifications', controller.getNotifications);
+router.post("/deleteAccount", controller.deleteAccount);
 router.get("/albums/:albumCode", controller.getAlbumByCode);
 router.get("/test", controller.test);
 router.get("/search", controller.searchAlbums);
@@ -74,7 +75,6 @@ router.post("/addLikeToAlbum/:albumCode", controller.addLikeToAlbum);
 router.post("/addSaveToAlbum/:albumCode", controller.saveAlbum);
 router.post('/repostAlbum/:albumCode', controller.repostAlbum);
 router.get("/repostedByUser/:albumCode", controller.checkIfAlbumRepostedByUser);
-
 router.post("/addComment/:albumCode", controller.addCommentToAlbum);
 router.get("/getComments/:albumCode", controller.getAlbumComments);
 router.post("/followUser", controller.followUser);
