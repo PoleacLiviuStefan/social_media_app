@@ -15,7 +15,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
 const serverURL = "https://www.api.thler.com"; //http://localhost:3001
-const clientURL = "http://localhost:3001"  //http://localhost:3000
+const clientURL = "https://nextjs-ssr-123-ce410f2237c9.herokuapp.com"  //http://localhost:3000
 
 const test = (req, res) => {
   res.send("Test endpoint working");
