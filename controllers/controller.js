@@ -14,8 +14,8 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "http://localhost:3001"; //https://www.api.thler.com
-const clientURL = "http://localhost:3000"  //https://thler.com
+const serverURL = "https://www.api.thler.com"; //http://localhost:3001
+const clientURL = "http://localhost:3001"  //http://localhost:3000
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -136,7 +136,7 @@ const loginSuccess = (req, res) => {
       });
 
       // Redirect to the desired URL
-      res.redirect("http://localhost:3000");  //https://thler.com"
+      res.redirect(clientURL);  
     }
   );
 };
