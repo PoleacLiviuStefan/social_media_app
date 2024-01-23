@@ -10,13 +10,13 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const session = require('express-session'); // Assuming you're using express-session
 const passport = require('./src/passport'); // Your Passport configuration
-const frontend = path.join(__dirname, 'react-app/build');
+const frontend = path.join(__dirname, '../../site/dist');
 dotenv.config();
 
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "https://thler.com", // Update as per your client URL http://localhost:5173
+    origin: "https://thler.com", // Update as per your client URL http://localhost:3000
 };
 
 app.use(cors(corsOptions));
@@ -42,15 +42,11 @@ app.use(express.static('public'));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/api', router);
 app.use('/', express.static(frontend));
-app.use(function (req, res, next) {
-    res.sendFile(path.join(frontend, 'index.html'));
-});
+
 passport.debug = true;
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-app.get('/*', (request, response) => {
-    response.sendFile(path.join(__dirname, '../dist/index.html'));
-});
+
 // Socket.IO setup
 const server = http.createServer(app);
 const io = socketIo(server, { cors: corsOptions });
@@ -63,7 +59,7 @@ io.on('connection', (socket) => {
     // More Socket.IO events here
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 server.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });

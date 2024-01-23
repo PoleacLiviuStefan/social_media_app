@@ -13,7 +13,7 @@
       {
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: "https://www.api.thler.com/api/google/callback",
+        callbackURL: "http://localhost:3001/api/google/callback", //https://www.api.thler.com
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {

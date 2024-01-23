@@ -58,6 +58,7 @@ router.get("/getMediaFromFollowing", controller.getMediaFromFollowing);
 router.get("/userAlbums/:username", controller.getMediaByUserName);
 router.get("/getLikedAlbums",controller.getLikedAlbums)
 router.get("/:albumCode/:mediaCode/isLiked",controller.checkIfLiked)
+router.get('/checkIfAlbumLiked/:albumCode', controller.checkIfAlbumLiked);
 router.get("/hideAllComents", controller.hideAllComments);
 router.get("/checkOptions", controller.editProfileOptions);
 router.get("/getMediaAll", controller.getMediaAll);

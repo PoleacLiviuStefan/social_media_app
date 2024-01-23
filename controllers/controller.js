@@ -14,8 +14,8 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "https://www.api.thler.com"; //http://localhost:3000
-const clientURL = "https://thler.com"  //http://localhost:5173
+const serverURL = "http://localhost:3001"; //https://www.api.thler.com
+const clientURL = "http://localhost:3000"  //https://thler.com
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -112,8 +112,8 @@ const handleTwitterCallback = (req, res) => {
   res.redirect(`${serverURL}/api/login/success`);
 };
 
-const loginSuccess = (req, res) => {
-  console.log("Req este:");
+const loginSuccess = (req, res) => {  
+  console.log("Req este:", req);
   if (!req.user) {
     return res.status(401).json({ error: "User not authenticated" });
   }
@@ -136,7 +136,7 @@ const loginSuccess = (req, res) => {
       });
 
       // Redirect to the desired URL
-      res.redirect("https://thler.com");
+      res.redirect("http://localhost:3000");  //https://thler.com"
     }
   );
 };
@@ -1091,6 +1091,38 @@ res.status(200).json({ message: "Media item like status updated successfully" })
     }
   };
 
+
+  const checkIfAlbumLiked = async (req, res) => {
+    const { albumCode } = req.params; // Get album code from request parameters
+    const { token } = req.cookies;
+  
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, jwtSecret);
+      const userId = decoded.id;
+  
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      const isLiked = user.likedAlbums.includes(albumCode);
+  
+      res.json({ isLiked });
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+      res.status(500).json({
+        error: "Failed to check if album is liked",
+        details: error.message,
+      });
+    }
+  };
+  
   
 const incrementAlbumViews = async (req, res) => {
   const { albumCode } = req.params;
@@ -1919,6 +1951,7 @@ module.exports = {
   getMediaItem,
   likeMediaItem,
   checkIfLiked,
+  checkIfAlbumLiked,
   searchAlbums,
   incrementAlbumViews,
   addLikeToAlbum,
