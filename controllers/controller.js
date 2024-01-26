@@ -357,7 +357,7 @@ const getCurrentUserInfo = async (req, res) => {
     const decoded = jwt.verify(token, jwtSecret);
     const userId = decoded.id;
 
-    const user = await User.findById(userId).select("email bio name image");
+    const user = await User.findById(userId).select("email bio name image isCommentDisabled isDownloadDisabled");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -367,6 +367,8 @@ const getCurrentUserInfo = async (req, res) => {
       bio: user.bio,
       name: user.name,
       image: user.image,
+      isCommentDisabled: user.isCommentDisabled,
+      isDownloadDisabled: user.isDownloadDisabled,
     });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -498,6 +500,46 @@ const removeProfileImage = async (req, res) => {
     }
   }
 };
+const deleteAlbum = async (req, res) => {
+  const { token } = req.cookies;
+  const { albumCode } = req.params; // Change albumId to albumCode for clarity
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Find the album index using the album code instead of _id
+    const albumIndex = user.albums.findIndex(album => album.code === albumCode);
+    if (albumIndex === -1) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    // Remove the album from the user's albums array
+    user.albums.splice(albumIndex, 1);
+    await user.save();
+
+    res.json({ message: "Album deleted successfully" });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    res.status(500).json({
+      error: "Failed to delete album",
+      details: error.message
+    });
+  }
+};
+
+
 
 const uploadProfileImage = async (req, res) => {
   const { token } = req.cookies; // Assuming the token is stored in cookies
@@ -1742,10 +1784,8 @@ const hideAllComments = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Toggle hideComments field for each album
-    user.albums.forEach((album) => {
-      album.hideComments = !album.hideComments;
-    });
+    // Toggle isCommentDisabled field for the user
+    user.isCommentDisabled = !user.isCommentDisabled;
 
     // Save the updated user
     await user.save();
@@ -1764,6 +1804,42 @@ const hideAllComments = async (req, res) => {
     }
   }
 };
+
+const disableAlbumDownload = async (req, res) => {
+  const { token } = req.cookies; // Assuming the current user's ID is in a token
+
+  try {
+    // Verify the token and get the current user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const currentUserId = decoded.id;
+
+    // Retrieve the current user
+    const user = await User.findById(currentUserId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Toggle isDownloadDisabled field for the user
+    user.isDownloadDisabled = !user.isDownloadDisabled;
+
+    // Save the updated user
+    await user.save();
+
+    res.json({ message: "Download album toggled successfully" });
+  } catch (e) {
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      // Log the error for debugging purposes
+      console.error(e);
+      res.status(500).json({
+        error: "Failed to toggle download album",
+        details: e.message,
+      });
+    }
+  }
+};
+
 
 const editProfileOptions = async (req, res) => {
   const { token } = req.cookies; // Assuming the current user's ID is in a token
@@ -1975,6 +2051,7 @@ module.exports = {
   togglePrivacy,
   profile,
   removeProfileImage,
+  deleteAlbum,
   uploadProfileImage,
   getCurrentUserInfo,
   updateUserProfile,
@@ -2007,6 +2084,7 @@ module.exports = {
   addCommentToAlbum,
   getAlbumComments,
   hideAllComments,
+  disableAlbumDownload,
   editProfileOptions,
   followUser,
   checkIfFollowingAlbumOwner,

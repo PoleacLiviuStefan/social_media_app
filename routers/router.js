@@ -48,6 +48,7 @@ router.post('/togglePrivacy', controller.togglePrivacy);
 router.get("/disconnect", controller.logout);
 router.post("/profile", controller.profile);
 router.post("/removeProfileImage",controller.removeProfileImage);
+router.delete('/album/:albumCode', controller.deleteAlbum);
 router.post('/uploadProfileImage', upload.single('image'), controller.uploadProfileImage);
 router.get("/mainInfo",controller.getCurrentUserInfo)
 router.put("/updateDetails",controller.updateUserProfile)
@@ -60,6 +61,7 @@ router.get("/getLikedAlbums",controller.getLikedAlbums)
 router.get("/:albumCode/:mediaCode/isLiked",controller.checkIfLiked)
 router.get('/checkIfAlbumLiked/:albumCode', controller.checkIfAlbumLiked);
 router.get("/hideAllComents", controller.hideAllComments);
+router.get("/disableAlbumDownloads", controller.disableAlbumDownload);
 router.get("/checkOptions", controller.editProfileOptions);
 router.get("/getMediaAll", controller.getMediaAll);
 router.get("/getRandomAlbum", controller.getRandomAlbums)

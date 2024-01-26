@@ -1,9 +1,9 @@
 
 
   const passport = require("passport");
-
   const GoogleStrategy = require("passport-google-oauth20").Strategy;
   const TwitterStrategy = require("passport-twitter").Strategy;
+
 
   const User = require("../models/User"); // Adjust the path to your User model
 
@@ -11,8 +11,8 @@
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET,
+        clientID: process.env.REDDIT_CLIENT_ID,
+        clientSecret: process.env.REDDIT_CLIENT_SECRET,
         callbackURL: "/api/google/callback", //http://localhost:3001
       },
       async (_accessToken, _refreshToken, profile, done) => {
@@ -38,6 +38,22 @@
       }
     )
   );
+let RedditStrategy;
+import('passport-reddit').then(module => {
+  RedditStrategy = module.default;
+
+  passport.use(new RedditStrategy({
+      clientID: process.env.REDDIT_CONSUMER_KEY,
+      clientSecret: process.env.REDDIT_CONSUMER_SECRET,
+      callbackURL: "/api/reddit/callback"
+    },
+    function(accessToken, refreshToken, profile, done) {
+      User.findOrCreate({ redditId: profile.id }, function (err, user) {
+        return done(err, user);
+      });
+    }
+  ));
+}).catch(err => console.error('Failed to import passport-reddit:', err));
   passport.use(
     new TwitterStrategy(
       {
