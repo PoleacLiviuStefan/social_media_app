@@ -38,22 +38,7 @@
       }
     )
   );
-let RedditStrategy;
-import('passport-reddit').then(module => {
-  RedditStrategy = module.default;
 
-  passport.use(new RedditStrategy({
-      clientID: process.env.REDDIT_CONSUMER_KEY,
-      clientSecret: process.env.REDDIT_CONSUMER_SECRET,
-      callbackURL: "/api/reddit/callback"
-    },
-    function(accessToken, refreshToken, profile, done) {
-      User.findOrCreate({ redditId: profile.id }, function (err, user) {
-        return done(err, user);
-      });
-    }
-  ));
-}).catch(err => console.error('Failed to import passport-reddit:', err));
   passport.use(
     new TwitterStrategy(
       {
