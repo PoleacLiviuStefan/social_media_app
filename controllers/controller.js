@@ -14,8 +14,8 @@ dotenv.config();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
 
-const serverURL = "http://localhost:3001"; //https://www.api.waygital.ro
-const clientURL = "http://localhost:4789"  //https://www.waygital.ro
+const serverURL = "https://www.api.waygital.ro"; //http://localhost:3001
+const clientURL = "https://www.waygital.ro"  //http://localhost:4789
 
 const test = (req, res) => {
   res.send("Test endpoint working");
@@ -938,6 +938,8 @@ const getMediaFromFollowing = async (req, res) => {
       acc.push(...userAlbums);
       return acc;
     }, []);
+
+    console.log(followingAlbums);
 
     res.status(200).json({ albums: followingAlbums });
   } catch (e) {
