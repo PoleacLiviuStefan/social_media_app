@@ -16,7 +16,7 @@ dotenv.config();
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "https://nextjs-ssr-123-ce410f2237c9.herokuapp.com", // Update as per your client URL http://localhost:4789
+    origin: "https://www.waygita.ro", // Update as per your client URL http://localhost:4789
 };
 
 app.use(cors(corsOptions));
