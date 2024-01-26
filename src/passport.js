@@ -11,8 +11,8 @@
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.REDDIT_CLIENT_ID,
-        clientSecret: process.env.REDDIT_CLIENT_SECRET,
+        clientID: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET,
         callbackURL: "/api/google/callback", //http://localhost:3001
       },
       async (_accessToken, _refreshToken, profile, done) => {
