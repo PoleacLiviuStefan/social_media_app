@@ -32,6 +32,7 @@ const UserSchema = new Schema({
     following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likedAlbums: [{ type: String }],
     savedAlbums: [{type: String}],
+    searchHistory: [{type: String}],
     notifications: [NotificationSchema]
 });
 

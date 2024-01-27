@@ -987,17 +987,96 @@ const getAlbumByCode = async (req, res) => {
 
 const searchAlbums = async (req, res) => {
   const { query } = req.query;
+  const { token } = req.cookies;  // Extract token from cookies
   try {
+    // Verify the token and get the user's ID
+    const decoded = jwt.verify(token, jwtSecret);
+    const userId = decoded.id;
+    // Find the current user and update their search history
+    await User.findByIdAndUpdate(userId, { $push: { searchHistory: query } });
+
+    // Execute the original search functionality
     const users = await User.find(
       {
         "albums.title": { $regex: query, $options: "i" },
       },
       { "albums.$": 1 }
     );
+
     const matchingAlbums = users.map((user) => user.albums).flat();
     res.status(200).json({ albums: matchingAlbums });
   } catch (e) {
-    res.status(500).json({ error: "Search failed", details: e.message });
+    if (e instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: "Invalid token" });
+    } else {
+      res.status(500).json({ error: "Search failed", details: e.message });
+    }
+  }
+};
+
+const getSearchHistory = async (req, res) => {
+  const { token } = req.cookies; // Or however you're passing the token
+
+  if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+      // Verify the token and extract the user's ID
+      const decoded = jwt.verify(token, jwtSecret);
+      const userId = decoded.id;
+
+      // Find the user and retrieve their search history
+      const user = await User.findById(userId).select('searchHistory');
+
+      if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Get the last 10 items of the search history
+      const lastTenSearches = user.searchHistory.slice(-10);
+
+      // Send the last 10 search history items in the response
+      res.status(200).json({ searchHistory: lastTenSearches });
+  } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+          return res.status(401).json({ error: 'Invalid token' });
+      }
+      console.error('Error retrieving search history:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const deleteSearchHistoryItem = async (req, res) => {
+  const { token } = req.cookies;
+  const { itemId } = req.params; // Assuming the item ID is passed as a URL parameter
+
+  if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+      const decoded = jwt.verify(token, jwtSecret);
+      const userId = decoded.id;
+
+      const user = await User.findById(userId);
+
+      if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Remove the specific search history item
+      user.searchHistory = user.searchHistory.filter(item => item !== itemId);
+
+      await user.save();
+
+      res.status(200).json({ message: 'Search history item deleted', searchHistory: user.searchHistory });
+  } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+          return res.status(401).json({ error: 'Invalid token' });
+      }
+      console.error('Error in deleteSearchHistoryItem:', error);
+      res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -2074,6 +2153,8 @@ module.exports = {
   checkIfLiked,
   checkIfAlbumLiked,
   searchAlbums,
+  getSearchHistory,
+  deleteSearchHistoryItem,
   incrementAlbumViews,
   addLikeToAlbum,
   saveAlbum,

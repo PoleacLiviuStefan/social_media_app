@@ -72,6 +72,8 @@ router.post("/deleteAccount", controller.deleteAccount);
 router.get("/albums/:albumCode", controller.getAlbumByCode);
 router.get("/test", controller.test);
 router.get("/search", controller.searchAlbums);
+router.get("/getSearchHistory",controller.getSearchHistory);
+router.delete('/searchHistory/:itemId', controller.deleteSearchHistoryItem);
 router.get("/album/view/:albumCode", controller.incrementAlbumViews);
 router.post("/addLikeToAlbum/:albumCode", controller.addLikeToAlbum);
 router.post("/addSaveToAlbum/:albumCode", controller.saveAlbum);
