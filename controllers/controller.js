@@ -914,7 +914,7 @@ const deleteAccount = async (req, res) => {
 
 const getMediaFromFollowing = async (req, res) => {
   const { token } = req.cookies; // or get the user ID from request params or body
-
+  console.log("token din folowing", token);
   try {
     // Verify the token and get the user's ID
     const decoded = jwt.verify(token, jwtSecret);
