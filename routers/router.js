@@ -55,7 +55,7 @@ router.put("/updateDetails",controller.updateUserProfile)
 router.put("/updatePassword",controller.updateUserPassword)
 router.post("/upload", upload.array("file", 100), controller.upload);
 router.get("/getMedia", controller.getMedia);
-router.get("/getMediaFromFollowing", controller.getMediaFromFollowing);
+router.post("/getMediaFromFollowing", controller.getMediaFromFollowing);
 router.get("/userAlbums/:username", controller.getMediaByUserName);
 router.get("/getLikedAlbums",controller.getLikedAlbums)
 router.get("/:albumCode/:mediaCode/isLiked",controller.checkIfLiked)
