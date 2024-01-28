@@ -6,14 +6,16 @@ const multerS3 = require("multer-s3");
 const AWS = require("aws-sdk")
 const path = require("path");
 const passport =require("passport");
-const { v4: uuidv4 } = require("uuid");
+const customId = require("custom-id");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/uploads");
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = uuidv4(); // Unique identifier
+    const uniqueSuffix = customId({
+      
+    }); // Unique identifier
     cb(
       null,
       file.fieldname + "_" + uniqueSuffix + path.extname(file.originalname)

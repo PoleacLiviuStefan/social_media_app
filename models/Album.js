@@ -33,6 +33,7 @@ const AlbumSchema = new Schema({
     reposts: { type: Number, default: 0 },
     repostsByUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     shares: { type: Number, default: 0 },
+    isReposted: {type: Boolean, default: false},
     hideComments: { type: Boolean, default: false }, // Indicates if all comments should be hidden
     comments: [CommentSchema] // Array of CommentSchema documents
 

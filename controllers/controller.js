@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require("uuid");
+const customId = require("custom-id");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -609,7 +609,9 @@ const logout = (req, res) => {
 const upload = (req, res) => {
   const uploadedFiles = req.files.map((file) => ({
     name: file.filename,
-    code: uuidv4(),
+    code:customId({
+      name:file.filename,
+  }),
     likes: 0,
     likesByUsers: [],
   }));
@@ -629,7 +631,9 @@ const upload = (req, res) => {
           return res.status(404).json({ error: "User not found" });
         }
 
-        const albumCode = uuidv4();
+        const albumCode =  customId({
+          name: albumTitle
+      });
         const album = {
           title: albumTitle,
           files: req.files.map((file) => file.filename),
@@ -736,7 +740,8 @@ const getLikedAlbums = async (req, res) => {
     let likedAlbums = [];
     usersWithLikedAlbums.forEach((user) => {
       user.albums.forEach((album) => {
-        if (currentUser.likedAlbums.includes(album.code)) {
+        // Check if the album is liked and not a repost
+        if (currentUser.likedAlbums.includes(album.code) && !album.isReposted) {
           const images = album.content.filter((file) =>
             file.name.match(/\.(png|jpg|jpeg)$/i));
           const videos = album.content.filter((file) =>
@@ -769,18 +774,21 @@ const getLikedAlbums = async (req, res) => {
 };
 
 
+
 const getMediaAll = async (req, res) => {
   try {
     // Fetch all users with selected fields
     const users = await User.find({}, "name image albums").exec();
 
-    // Process the data to exclude repostedAlbums
+    // Process the data to exclude albums where isReposted is true
     const allAlbums = users.reduce((acc, user) => {
-      const userAlbums = user.albums.map((album) => ({
-        ...album._doc,
-        userName: user.name,
-        userImage: user.image,
-      }));
+      const userAlbums = user.albums
+        .filter(album => !album.isReposted) // Filter out albums where isReposted is true
+        .map((album) => ({
+          ...album._doc,
+          userName: user.name,
+          userImage: user.image,
+        }));
       acc.push(...userAlbums);
       return acc;
     }, []);
@@ -793,18 +801,21 @@ const getMediaAll = async (req, res) => {
   }
 };
 
+
 const getRandomAlbums = async (req, res) => {
   try {
     // Fetch all users with selected fields
     const users = await User.find({}, "name image albums").exec();
 
-    // Flatten the array of user albums
+    // Flatten the array of user albums and filter out reposted albums
     let allAlbums = users.reduce((acc, user) => {
-      const userAlbums = user.albums.map((album) => ({
-        ...album._doc,
-        userName: user.name,
-        userImage: user.image,
-      }));
+      const userAlbums = user.albums
+        .filter(album => !album.isReposted) // Filter out albums where isReposted is true
+        .map((album) => ({
+          ...album._doc,
+          userName: user.name,
+          userImage: user.image,
+        }));
       acc.push(...userAlbums);
       return acc;
     }, []);
@@ -822,6 +833,7 @@ const getRandomAlbums = async (req, res) => {
       .json({ error: "Failed to retrieve albums", details: e.message });
   }
 };
+
 
 
 
@@ -1507,6 +1519,7 @@ const repostAlbum = async (req, res) => {
       ...originalAlbum.toObject(),
       _id: new mongoose.Types.ObjectId(), // Generate a new ID
       originalOwnerName: originalOwner.name, // Add the original owner's name
+      isReposted: true // Set the isReposted field to true
     };
 
     // Add the reposted album to the current user's albums
@@ -1523,6 +1536,7 @@ const repostAlbum = async (req, res) => {
       .json({ error: "Failed to repost album", details: error.message });
   }
 };
+
 
 
 const checkIfAlbumRepostedByUser = async (req, res) => {
@@ -1586,13 +1600,15 @@ const getSavedAlbums = async (req, res) => {
       { "albums.$": 1 }
     ).lean();
 
-    // Prepare the array of saved albums to return
+    // Prepare the array of saved albums to return, excluding reposted albums
     const albums = usersWithSavedAlbums.reduce((acc, u) => {
-      const userAlbums = u.albums.map((album) => ({
-        ...album,
-        userName: user.name, // Add the userName for each album
-        userImage: user.image, // Add the userImage for each album
-      }));
+      const userAlbums = u.albums
+        .filter(album => !album.isReposted) // Filter out albums where isReposted is true
+        .map((album) => ({
+          ...album,
+          userName: user.name, // Add the userName for each album
+          userImage: user.image, // Add the userImage for each album
+        }));
       acc.push(...userAlbums);
       return acc;
     }, []);
@@ -1614,6 +1630,7 @@ const getSavedAlbums = async (req, res) => {
       });
   }
 };
+
 
 const isAlbumSaved = async (req, res) => {
   const { albumCode } = req.params;
