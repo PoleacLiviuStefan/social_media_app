@@ -8,6 +8,11 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 const passport = require("passport");
 const mongoose = require("mongoose"); // Add this line
+const path= require("path");
+const mime = require('mime-types');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegStatic = require('ffmpeg-static');
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
 dotenv.config();
 
@@ -606,39 +611,66 @@ const logout = (req, res) => {
     
 };
 
-const upload = (req, res) => {
-  const uploadedFiles = req.files.map((file) => ({
-    name: file.filename,
-    code:customId({
-      name:file.filename,
-  }),
-    likes: 0,
-    likesByUsers: [],
-  }));
+const isVideoFile = (file) => {
+  const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mpeg'];
+  const mimeType = mime.lookup(file.originalname);
+  return videoMimeTypes.includes(mimeType);
+};
 
-  const albumTitle = req.body.albumTitle;
-  const { token } = req.cookies;
-  console.log(uploadedFiles);
-  
-  if (token) {
-    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-      if (err) {
-        return res.status(401).json({ error: "Unauthorized" });
+// Helper function to create a thumbnail
+const createThumbnail = (videoPath, thumbnailPath) => {
+  return new Promise((resolve, reject) => {
+    ffmpeg(videoPath)
+      .screenshots({
+        timestamps: ['00:00:01'],
+        filename: thumbnailPath,
+        folder: './public/uploads',
+      })
+      .on('end', () => resolve(thumbnailPath))
+      .on('error', (err) => reject(err));
+  });
+};
+
+
+const upload = async (req, res) => {
+  try {
+    const uploadedFiles = await Promise.all(req.files.map(async (file) => {
+      let fileInfo = {
+        name: file.filename,
+        code: customId({ name: file.filename }), // Replace with your customId function
+        likes: 0,
+        likesByUsers: [],
+      };
+
+      if (isVideoFile(file)) {
+        const parsedFilename = path.parse(file.filename);
+        const thumbnailPath = 'thumbnail_' + parsedFilename.name + '.png';
+        fileInfo.videoThumbnail = await createThumbnail(file.path, thumbnailPath);;
       }
-      try {
-        const user = await User.findById(userData.id);
+
+      return fileInfo;
+    }));
+
+    const albumTitle = req.body.albumTitle;
+    const { token } = req.cookies;
+
+    if (token) {
+      jwt.verify(token, jwtSecret, {}, async (err, userData) => { // Replace jwtSecret with your secret
+        if (err) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const user = await User.findById(userData.id); // Replace User with your User model
         if (!user) {
           return res.status(404).json({ error: "User not found" });
         }
 
-        const albumCode =  customId({
-          name: albumTitle
-      });
+        const albumCode = customId({ name: albumTitle }); // Replace with your customId function
         const album = {
           title: albumTitle,
           files: req.files.map((file) => file.filename),
-          originalOwnerName: user.name, // Numele proprietarului original
-          originalOwnerImage: user.image, // Imaginea de profil a proprietarului original
+          originalOwnerName: user.name,
+          originalOwnerImage: user.image,
           code: albumCode,
           content: uploadedFiles,
         };
@@ -646,19 +678,16 @@ const upload = (req, res) => {
         user.albums.push(album);
         await user.save();
 
-        res
-          .status(200)
-          .json({ message: "Album created successfully", albumCode });
-      } catch (e) {
-        res
-          .status(500)
-          .json({ error: "Failed to create album", details: e.message });
-      }
-    });
-  } else {
-    res.status(401).json({ error: "No token provided" });
+        res.status(200).json({ message: "Album created successfully", albumCode });
+      });
+    } else {
+      res.status(401).json({ error: "No token provided" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Error processing files", details: error.message });
   }
 };
+
 
 const getMedia = (req, res) => {
   console.log("da");

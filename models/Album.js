@@ -15,7 +15,8 @@ const MediaScheme = new Schema({
     name: String,
     code: String,
     likes: Number,
-    likesByUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+    likesByUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    videoThumbnail: {type: String, default: ""},
 });
 
 const AlbumSchema = new Schema({
