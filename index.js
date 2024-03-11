@@ -16,7 +16,7 @@ dotenv.config();
 // Configure CORS
 const corsOptions = {
     credentials: true,
-    origin: "https://www.waygital.ro", // Update as per your client URL http://localhost:4789
+    origin: "https://social.waygital.ro", // Update as per your client URL http://localhost:4789
 };
 
 app.use(cors(corsOptions));
